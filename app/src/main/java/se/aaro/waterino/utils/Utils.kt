@@ -1,6 +1,11 @@
 package se.aaro.waterino.utils
 
+import android.view.View
+import android.view.ViewGroup
+import android.view.animation.Animation
+import android.view.animation.Transformation
 import kotlin.math.roundToInt
+
 
 private const val SECOND_MILLIS = 1000
 private const val MINUTE_MILLIS = 60 * SECOND_MILLIS
@@ -48,4 +53,56 @@ fun getTimeAgo(time: Long): String? {
     } else {
         "${(diff / DAY_MILLIS.toDouble()).roundToInt()} days ago"
     }
+}
+
+
+fun expand(v: View, listener: Animation.AnimationListener?) {
+    v.measure(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+    val targetHeight: Int = v.measuredHeight
+    v.layoutParams.height = 0
+    v.visibility = View.VISIBLE
+    val a: Animation = object : Animation() {
+        override fun applyTransformation(
+            interpolatedTime: Float,
+            t: Transformation?
+        ) {
+            v.layoutParams.height =
+                if (interpolatedTime == 1f) ViewGroup.LayoutParams.WRAP_CONTENT else (targetHeight * interpolatedTime).toInt()
+            v.alpha = interpolatedTime
+            v.requestLayout()
+        }
+
+        override fun willChangeBounds(): Boolean {
+            return true
+        }
+    }
+    a.setDuration(125)
+    a.setAnimationListener(listener)
+    v.startAnimation(a)
+}
+
+fun collapse(v: View, listener: Animation.AnimationListener?) {
+    val initialHeight: Int = v.getMeasuredHeight()
+    val a: Animation = object : Animation() {
+        override fun applyTransformation(
+            interpolatedTime: Float,
+            t: Transformation?
+        ) {
+            v.alpha = 1 - interpolatedTime
+            if (interpolatedTime == 1f) {
+                v.visibility = View.GONE
+            } else {
+                v.getLayoutParams().height =
+                    initialHeight - (initialHeight * interpolatedTime).toInt()
+                v.requestLayout()
+            }
+        }
+
+        override fun willChangeBounds(): Boolean {
+            return true
+        }
+    }
+    a.setDuration(125)
+    a.setAnimationListener(listener)
+    v.startAnimation(a)
 }

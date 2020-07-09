@@ -22,19 +22,45 @@
                 card_view:cardCornerRadius="4dp">
 
             <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="16dp"
-                    android:focusableInTouchMode="true"
-                    android:orientation="vertical">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/settings_card"
+                android:orientation="horizontal"
+                android:paddingRight="16dp"
+                android:paddingLeft="16dp"
+                android:paddingTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:weightSum="20">
 
                 <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textStyle="bold"
-                        android:textSize="18sp"
-                        android:layout_marginBottom="16dp"
-                        android:text="Settings"/>
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:text="Settings"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="16"
+                    android:id="@+id/settings_tv"/>
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="4"
+                    android:gravity="center_vertical"
+                    android:src="@drawable/ic_arrow_down_24"
+                    android:id="@+id/expand_collapse_button"/>
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="38dp"
+                    android:padding="16dp"
+                    android:id="@+id/settings_container"
+                    android:focusableInTouchMode="true"
+                    android:orientation="vertical">
 
                 <LinearLayout
                         android:layout_width="match_parent"
@@ -429,18 +455,20 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
+                        android:weightSum="10"
                         android:layout_marginTop="18dp">
 
                     <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:textSize="14sp"
+                            android:layout_weight="4"
+                            android:textSize="11sp"
                             android:text="Approximated watered amount:"/>
 
                     <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textSize="14sp"
+                            android:textSize="11sp"
                             android:layout_marginLeft="8dp"
                             android:id="@+id/watered_ammount"
                             android:text=""/>
@@ -457,14 +485,14 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="14sp"
+                            android:textSize="11sp"
                             android:layout_weight="4"
                             android:text="Time until next measurement:"/>
 
                     <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:textSize="14sp"
+                            android:textSize="11sp"
                             android:id="@+id/time_until_next"
                             android:layout_weight="3"
                             android:text="4 hours"/>

@@ -2,10 +2,8 @@ package se.aaro.waterino.sensordata
 
 import android.app.Application
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Handler
 import com.google.android.gms.tasks.OnCompleteListener
-import java.util.prefs.Preferences
 
 
 class SensorDataPresenter(val view: SensorDataContract.View, context: Context): SensorDataContract.Presenter {

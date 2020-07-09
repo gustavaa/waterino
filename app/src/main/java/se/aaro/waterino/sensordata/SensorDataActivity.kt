@@ -3,6 +3,7 @@ package se.aaro.waterino.sensordata
 import android.app.Activity
 import android.os.Bundle
 import android.view.View
+import android.view.animation.Animation
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
@@ -15,6 +16,7 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import com.github.mikephil.charting.utils.Utils
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
 import com.google.firebase.FirebaseApp
@@ -24,6 +26,8 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import kotlinx.android.synthetic.main.activity_main.*
 import se.aaro.waterino.R
+import se.aaro.waterino.utils.collapse
+import se.aaro.waterino.utils.expand
 import se.aaro.waterino.utils.getTimeAgo
 import se.aaro.waterino.utils.getTimeUntil
 import java.lang.NumberFormatException
@@ -33,11 +37,8 @@ import java.util.*
 
 class MainActivity : AppCompatActivity(), SensorDataContract.View {
 
-
-    var chart: Cartesian? = null
-
     lateinit var presenter: SensorDataPresenter
-
+    var isSettingsExpanded = false
 
     companion object {
         private const val TAG = "SensorActivity"
@@ -47,10 +48,6 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         presenter = SensorDataPresenter(this, this)
-
-        FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
-            println(it.result?.token)
-        }
     }
 
 
@@ -66,6 +63,32 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         enable_notifications_chip.setOnClickListener { v->
             presenter.onUserChangeNotificationsEnabled(enable_notifications_chip.isChecked)
         }
+
+        settings_card.setOnClickListener { v ->
+            when(isSettingsExpanded){
+                true -> collapse(settings_container, object: Animation.AnimationListener{
+                    override fun onAnimationRepeat(p0: Animation?) {}
+                    override fun onAnimationStart(p0: Animation?) {
+                        expand_collapse_button.animate().rotation(0F).setDuration(200).start()
+                    }
+                    override fun onAnimationEnd(p0: Animation?) {
+                        isSettingsExpanded = false
+                    }
+                })
+                false -> expand(settings_container, object: Animation.AnimationListener{
+                    override fun onAnimationRepeat(p0: Animation?) {}
+                    override fun onAnimationStart(p0: Animation?) {
+                    }
+                    override fun onAnimationEnd(p0: Animation?) {
+                        expand_collapse_button.animate().rotation(180F).setDuration(200).start()
+                        isSettingsExpanded = true
+                    }
+                })
+            }
+        }
+
+        collapse(settings_container,null)
+
 
         set_watering_threshold.setOnEditorActionListener { v, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -339,10 +362,6 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         }
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         view.clearFocus()
-    }
-
-    fun getColorFromAttr(attr: Int): String {
-        return "#" + Integer.toHexString(getColor(attr)).replace("ff", "")
     }
 
 }
