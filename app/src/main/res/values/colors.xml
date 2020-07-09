@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#4CAF50</color>
+    <color name="colorPrimaryDark">#2E7D32</color>
+    <color name="colorAccent">#1976D2</color>
+    <color name="humidityColor">#F9A825</color>
+    <color name="tempColor">#D84315</color>
+    <color name="background">#FAFAFA</color>
+    <color name="markerBackground">#B3272626</color>
+</resources>
