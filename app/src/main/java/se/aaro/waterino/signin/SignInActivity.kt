@@ -1,4 +1,4 @@
-package se.aaro.waterino.signin.ui.login
+package se.aaro.waterino.signin
 
 import android.content.Intent
 import android.os.Bundle

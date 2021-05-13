@@ -21,7 +21,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_main.*
 import se.aaro.waterino.R
-import se.aaro.waterino.signin.ui.login.SignInActivity
+import se.aaro.waterino.signin.SignInActivity
 import se.aaro.waterino.utils.collapse
 import se.aaro.waterino.utils.expand
 import se.aaro.waterino.utils.getTimeAgo
