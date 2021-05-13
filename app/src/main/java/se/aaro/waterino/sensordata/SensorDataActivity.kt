@@ -51,8 +51,8 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         presenter = SensorDataPresenter(this, this)
+        presenter.setupNotifications()
     }
-
 
     override fun setUpViews() {
         enable_watering_chip.setOnCheckedChangeListener { _, isChecked ->

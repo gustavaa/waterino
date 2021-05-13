@@ -10,11 +10,11 @@ class SensorDataPresenter(val view: SensorDataContract.View, context: Context): 
 
     var model: SensorDataModel
 
-    val timeUpdaterHandler = Handler()
+    private val timeUpdaterHandler = Handler()
     lateinit var timeUpdateRunnable: Runnable
-    val notificationsEnabledKey = "ENABLE_NOTIFICATION"
+    private val notificationsEnabledKey = "ENABLE_NOTIFICATION"
 
-    val preferences = context.getSharedPreferences("settings",Application.MODE_PRIVATE);
+    private val preferences = context.getSharedPreferences("settings",Application.MODE_PRIVATE);
 
 
     init {
@@ -27,6 +27,10 @@ class SensorDataPresenter(val view: SensorDataContract.View, context: Context): 
         }
         timeUpdaterHandler.post(timeUpdateRunnable)
 
+
+    }
+
+    override fun setupNotifications() {
         val enableNotifications = preferences.getBoolean(notificationsEnabledKey,false)
         model.setNotificationsEnabled(enableNotifications,null)
         view.setNotificationsEnabled(enableNotifications)

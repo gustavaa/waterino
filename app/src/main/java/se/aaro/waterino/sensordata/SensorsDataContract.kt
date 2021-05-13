@@ -54,6 +54,8 @@ interface SensorDataContract {
 
         fun onNewSensorData(data: List<WateringData>)
 
+        fun setupNotifications()
+
         fun onUserForceNextChange(forceNext: Boolean, onCompleteListener: OnCompleteListener<Void>?)
 
         fun onUserThresholdChange(threshold: Int, onCompleteListener: OnCompleteListener<Void>?)
