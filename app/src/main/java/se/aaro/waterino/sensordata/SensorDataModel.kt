@@ -1,7 +1,6 @@
 package se.aaro.waterino.sensordata
 
 import android.util.Log
-import com.anychart.chart.common.dataentry.BubbleDataEntry
 import com.anychart.chart.common.dataentry.DataEntry
 import com.anychart.chart.common.dataentry.ValueDataEntry
 import com.google.android.gms.tasks.OnCompleteListener
@@ -12,7 +11,6 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.database.ktx.getValue
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
-import kotlin.math.round
 import kotlin.math.roundToInt
 
 class SensorDataModel(val presenter: SensorDataPresenter): SensorDataContract.Model {
@@ -20,17 +18,17 @@ class SensorDataModel(val presenter: SensorDataPresenter): SensorDataContract.Mo
     var lastUpdate: Long = 0
     var nextUpdate: Long = 0
 
-    val database = Firebase.database
+    private val database = Firebase.database
 
-    val enableRef = database.getReference("enableWatering")
-    val forceNextref = database.getReference("forceNextWatering")
+    private val enableRef = database.getReference("enableWatering")
+    private val forceNextRef = database.getReference("forceNextWatering")
 
-    val thresholdRef = database.getReference("wateringThreshold")
-    val wateringDataRef = database.getReference("wateringdata")
+    private val thresholdRef = database.getReference("wateringThreshold")
+    private val wateringDataRef = database.getReference("wateringdata")
 
-    val wateringAmountRef = database.getReference("wateringTimeMillis")
-    val maxWateringTemperatureRef = database.getReference("maxWateringTemperature")
-    val updateFrequencyRef = database.getReference("updateFrequencyHours")
+    private val wateringAmountRef = database.getReference("wateringTimeMillis")
+    private val maxWateringTemperatureRef = database.getReference("maxWateringTemperature")
+    private val updateFrequencyRef = database.getReference("updateFrequencyHours")
 
     init {
 
@@ -43,7 +41,7 @@ class SensorDataModel(val presenter: SensorDataPresenter): SensorDataContract.Mo
             }
         })
 
-        forceNextref.addValueEventListener(object: ValueEventListener{
+        forceNextRef.addValueEventListener(object: ValueEventListener{
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 presenter.onForceNextUpdated(dataSnapshot.getValue<Boolean>() as Boolean)
             }
@@ -66,7 +64,7 @@ class SensorDataModel(val presenter: SensorDataPresenter): SensorDataContract.Mo
                 val latestData = dataSnapshot.children.last().getValue<WateringData>() as WateringData
                 lastUpdate = latestData.time
                 nextUpdate = latestData.time + latestData.nextUpdate
-                presenter.onNewSensorData(dataSnapshot.children.map { it.getValue<WateringData>() })
+                presenter.onNewSensorData(dataSnapshot.children.mapNotNull { it.getValue<WateringData>() })
             }
             override fun onCancelled(dataSnapshot: DatabaseError) {
 
@@ -113,9 +111,9 @@ class SensorDataModel(val presenter: SensorDataPresenter): SensorDataContract.Mo
 
     override fun setForceNext(forceNext: Boolean, onCompleteListener: OnCompleteListener<Void>?) {
         if(onCompleteListener == null){
-            forceNextref.setValue(forceNext)
+            forceNextRef.setValue(forceNext)
         } else {
-            forceNextref.setValue(forceNext).addOnCompleteListener(onCompleteListener)
+            forceNextRef.setValue(forceNext).addOnCompleteListener(onCompleteListener)
         }
     }
 
@@ -152,25 +150,24 @@ class SensorDataModel(val presenter: SensorDataPresenter): SensorDataContract.Mo
     }
 
     override fun setNotificationsEnabled(enabled: Boolean, onCompleteListener: OnCompleteListener<Void>?) {
-        if(enabled){
-            FirebaseMessaging.getInstance().subscribeToTopic("plantData").addOnCompleteListener {
-                    task ->
-                if(task.isSuccessful){
-                    Log.d("SensorData", "Subscribed to plantData topic successfully")
-                } else {
-                    Log.d("SensorData", "Failed to subscribe to plantData")
+        if (enabled) {
+            FirebaseMessaging.getInstance().subscribeToTopic("plantData")
+                .addOnCompleteListener { task ->
+                    when (task.isSuccessful) {
+                        true -> Log.d("SensorData", "Subscribed to plantData topic successfully")
+                        else -> Log.d("SensorData", "Failed to subscribe to plantData")
+                    }
                 }
-            }
         } else {
-            FirebaseMessaging.getInstance().unsubscribeFromTopic("plantData").addOnCompleteListener {
-                    task ->
-                if(task.isSuccessful){
-                    Log.d("SensorData", "Unsubscribed from plantData topic ")
-                } else {
-                    Log.d("SensorData", "Failed to subscribe to plantData")
+            FirebaseMessaging.getInstance().unsubscribeFromTopic("plantData")
+                .addOnCompleteListener { task ->
+                    when (task.isSuccessful) {
+                        true -> Log.d("SensorData", "Unsubscribed from plantData topic ")
+                        else -> Log.d("SensorData", "Failed to subscribe to plantData")
+                    }
                 }
-            }
         }
+
     }
 
 }

@@ -3,7 +3,10 @@ package se.aaro.waterino.utils
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
+import android.view.animation.AnticipateOvershootInterpolator
+import android.view.animation.BounceInterpolator
 import android.view.animation.Transformation
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import kotlin.math.roundToInt
 
 
@@ -32,7 +35,6 @@ fun getTimeUntil(upcomingTime: Long): String? {
 }
 
 fun getTimeAgo(time: Long): String? {
-    var time = time
     val now: Long = System.currentTimeMillis()
     if (time > now || time <= 0) {
         return null
@@ -56,45 +58,46 @@ fun getTimeAgo(time: Long): String? {
 }
 
 
-fun expand(v: View, listener: Animation.AnimationListener?) {
-    v.measure(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-    val targetHeight: Int = v.measuredHeight
-    v.layoutParams.height = 0
-    v.visibility = View.VISIBLE
+fun View.expand(listener: Animation.AnimationListener?) {
+    measure(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+    val targetHeight: Int = measuredHeight
+    layoutParams.height = 0
+    visibility = View.VISIBLE
     val a: Animation = object : Animation() {
         override fun applyTransformation(
             interpolatedTime: Float,
             t: Transformation?
         ) {
-            v.layoutParams.height =
+            layoutParams.height =
                 if (interpolatedTime == 1f) ViewGroup.LayoutParams.WRAP_CONTENT else (targetHeight * interpolatedTime).toInt()
-            v.alpha = interpolatedTime
-            v.requestLayout()
+            alpha = interpolatedTime
+            requestLayout()
         }
 
         override fun willChangeBounds(): Boolean {
             return true
         }
     }
-    a.setDuration(125)
+    a.duration = 350
     a.setAnimationListener(listener)
-    v.startAnimation(a)
+    a.interpolator = AnticipateOvershootInterpolator()
+    startAnimation(a)
 }
 
-fun collapse(v: View, listener: Animation.AnimationListener?) {
-    val initialHeight: Int = v.getMeasuredHeight()
+fun View.collapse(listener: Animation.AnimationListener?) {
+    val initialHeight: Int = measuredHeight
     val a: Animation = object : Animation() {
         override fun applyTransformation(
             interpolatedTime: Float,
             t: Transformation?
         ) {
-            v.alpha = 1 - interpolatedTime
+            alpha = 1 - interpolatedTime
             if (interpolatedTime == 1f) {
-                v.visibility = View.GONE
+                visibility = View.GONE
             } else {
-                v.getLayoutParams().height =
+                layoutParams.height =
                     initialHeight - (initialHeight * interpolatedTime).toInt()
-                v.requestLayout()
+                requestLayout()
             }
         }
 
@@ -102,7 +105,8 @@ fun collapse(v: View, listener: Animation.AnimationListener?) {
             return true
         }
     }
-    a.setDuration(125)
+    a.duration = 350
     a.setAnimationListener(listener)
-    v.startAnimation(a)
+    a.interpolator = AnticipateOvershootInterpolator()
+    startAnimation(a)
 }

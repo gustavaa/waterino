@@ -24,7 +24,7 @@ interface SensorDataContract {
 
     interface View {
 
-        fun updatePlot(sensorData: List<WateringData?>)
+        fun updatePlot(sensorData: List<WateringData>)
 
         fun updateLatestData(sensorData: WateringData)
 
@@ -52,7 +52,7 @@ interface SensorDataContract {
 
     interface Presenter {
 
-        fun onNewSensorData(data: List<WateringData?>)
+        fun onNewSensorData(data: List<WateringData>)
 
         fun onUserForceNextChange(forceNext: Boolean, onCompleteListener: OnCompleteListener<Void>?)
 

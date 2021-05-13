@@ -4,10 +4,13 @@ import android.app.Activity
 import android.os.Bundle
 import android.view.View
 import android.view.animation.Animation
+import android.view.animation.AnticipateInterpolator
+import android.view.animation.AnticipateOvershootInterpolator
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.anychart.charts.Cartesian
 import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.components.LimitLine.LimitLabelPosition
@@ -52,43 +55,44 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
 
 
     override fun setUpViews() {
-        enable_watering_chip.setOnCheckedChangeListener { button, isChecked ->
+        enable_watering_chip.setOnCheckedChangeListener { _, isChecked ->
             presenter.onUserEnableChange(isChecked, null)
         }
 
-        force_next.setOnCheckedChangeListener { button, isChecked ->
+        force_next.setOnCheckedChangeListener { _, isChecked ->
             presenter.onUserForceNextChange(isChecked, null)
         }
 
-        enable_notifications_chip.setOnClickListener { v->
-            presenter.onUserChangeNotificationsEnabled(enable_notifications_chip.isChecked)
+        enable_notifications_chip.setOnCheckedChangeListener { _, isChecked ->
+            presenter.onUserChangeNotificationsEnabled(isChecked)
         }
 
         settings_card.setOnClickListener { v ->
             when(isSettingsExpanded){
-                true -> collapse(settings_container, object: Animation.AnimationListener{
+                true -> settings_container.collapse(object: Animation.AnimationListener{
                     override fun onAnimationRepeat(p0: Animation?) {}
                     override fun onAnimationStart(p0: Animation?) {
-                        expand_collapse_button.animate().rotation(0F).setDuration(200).start()
+                        expand_collapse_button.animate().rotation(0F).setDuration(400).setInterpolator(AnticipateOvershootInterpolator()).start()
                     }
                     override fun onAnimationEnd(p0: Animation?) {
                         isSettingsExpanded = false
                     }
                 })
-                false -> expand(settings_container, object: Animation.AnimationListener{
+                false -> settings_container.expand(object: Animation.AnimationListener{
                     override fun onAnimationRepeat(p0: Animation?) {}
                     override fun onAnimationStart(p0: Animation?) {
+                        expand_collapse_button.animate().rotation(180F).setDuration(400).setInterpolator(
+                            AnticipateOvershootInterpolator()
+                        ).start()
                     }
                     override fun onAnimationEnd(p0: Animation?) {
-                        expand_collapse_button.animate().rotation(180F).setDuration(200).start()
                         isSettingsExpanded = true
                     }
                 })
             }
         }
 
-        collapse(settings_container,null)
-
+        settings_container.collapse(null)
 
         set_watering_threshold.setOnEditorActionListener { v, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -237,13 +241,11 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
     }
 
 
-    override fun updatePlot(sensorData: List<WateringData?>) {
-
-
-        val gaveWaterEntries = sensorData.filter { it!!.wateredPlant }.map { Entry(it!!.time.toFloat(), it.moisture.toFloat()) }
-        val moistureEntries = sensorData.map { Entry(it!!.time.toFloat(), it.moisture.toFloat()) }
-        val humidityEntries = sensorData.map { Entry(it!!.time.toFloat(), it.humidity.toFloat()) }
-        val tempEntries = sensorData.map { Entry(it!!.time.toFloat(), it.temperature) }
+    override fun updatePlot(sensorData: List<WateringData>) {
+        val gaveWaterEntries = sensorData.filter { it.wateredPlant }.map { Entry(it.time.toFloat(), it.moisture.toFloat()) }
+        val moistureEntries = sensorData.map { Entry(it.time.toFloat(), it.moisture.toFloat()) }
+        val humidityEntries = sensorData.map { Entry(it.time.toFloat(), it.humidity.toFloat()) }
+        val tempEntries = sensorData.map { Entry(it.time.toFloat(), it.temperature) }
 
         val moistureDataSet = LineDataSet(moistureEntries, "Soil moisture")
         val humidityDataSet = LineDataSet(humidityEntries, "Humidity")
@@ -281,7 +283,7 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         xAxis.valueFormatter = object : IndexAxisValueFormatter() {
 
             override fun getFormattedValue(value: Float): String {
-                return SimpleDateFormat("HH:mm MM-dd").format(Date(value!!.toLong())).toString()
+                return SimpleDateFormat("HH:mm MM-dd").format(Date(value.toLong())).toString()
             }
 
             override fun getPointLabel(entry: Entry?): String {
@@ -302,7 +304,7 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         mp_chart.invalidate()
         mp_chart.description.isEnabled = false
 
-        mp_chart.zoom(18f,1f,0f,0f)
+        mp_chart.zoom(1f,1f,0f,0f)
         mp_chart.moveViewToX((System.currentTimeMillis()).toFloat())
 
         updateThresholdLine()
@@ -354,13 +356,13 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
     }
 
 
-    fun hideKeyboard() {
+    private fun hideKeyboard() {
         val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
         var view = currentFocus
         if (view == null) {
             view = View(this);
         }
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        imm.hideSoftInputFromWindow(view.windowToken, 0);
         view.clearFocus()
     }
 

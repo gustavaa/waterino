@@ -32,17 +32,17 @@ class SensorDataPresenter(val view: SensorDataContract.View, context: Context): 
         view.setNotificationsEnabled(enableNotifications)
     }
 
-    override fun onNewSensorData(data: List<WateringData?>) {
+    override fun onNewSensorData(data: List<WateringData>) {
         var wateredAmount = 0.0
         data.forEach {
-            if(it!!.wateredPlant){
+            if(it.wateredPlant){
                 wateredAmount += it.wateredAmount*0.0001
             }
         }
         view.updateWateredAmount(wateredAmount)
-        view.updateLatestData(data.maxBy{ it!!.time }!!)
+        view.updateLatestData(data.maxBy{ it.time }!!)
         view.updatePlot(data
-                .sortedBy { it!!.time}
+                .sortedBy { it.time}
         )
         view.updateTimeViews(model.lastUpdate,model.nextUpdate)
     }
