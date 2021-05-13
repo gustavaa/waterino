@@ -1,39 +1,31 @@
 package se.aaro.waterino.sensordata
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.view.animation.Animation
-import android.view.animation.AnticipateInterpolator
 import android.view.animation.AnticipateOvershootInterpolator
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator
-import com.anychart.charts.Cartesian
 import com.github.mikephil.charting.components.LimitLine
-import com.github.mikephil.charting.components.LimitLine.LimitLabelPosition
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
-import com.github.mikephil.charting.utils.Utils
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
-import com.google.firebase.FirebaseApp
-import com.google.firebase.iid.FirebaseInstanceId
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.messaging.FirebaseMessaging
-import com.google.firebase.messaging.FirebaseMessagingService
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_main.*
 import se.aaro.waterino.R
+import se.aaro.waterino.signin.ui.login.SignInActivity
 import se.aaro.waterino.utils.collapse
 import se.aaro.waterino.utils.expand
 import se.aaro.waterino.utils.getTimeAgo
 import se.aaro.waterino.utils.getTimeUntil
-import java.lang.NumberFormatException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -52,6 +44,18 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         setContentView(R.layout.activity_main)
         presenter = SensorDataPresenter(this, this)
         presenter.setupNotifications()
+
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val auth = FirebaseAuth.getInstance()
+        val user = auth.currentUser
+        if (user == null) {
+            val signInIntent = Intent(this, SignInActivity::class.java)
+            startActivity(signInIntent)
+        }
     }
 
     override fun setUpViews() {
