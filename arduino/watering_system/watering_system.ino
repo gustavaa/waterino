@@ -2,24 +2,24 @@
 #include "Firebase_Arduino_WiFiNINA.h"
 #include <Arduino_JSON.h>
 #include "config.h"
+#include <I2CSoilMoistureSensor.h>
+#include <Wire.h>
 
 #define STABILIZATION_TIME 1000 // Let the sensor stabilize before reading
 #define MILLISECONDS_HOUR 3600000
 #define MILLISECONDS_MINUTE 60000
-#define WATERING_WAIT_TIME MILLISECONDS_MINUTE*3
+#define WATERING_WAIT_TIME MILLISECONDS_MINUTE*10
 
 
 FirebaseData firebaseData;
 
 SI7021 humiditySensor;
-int moistureSensor = A1;
-
 int moistureThreshold = 55;
-int sensorReference = 340;
+int sensorReference = 450;
 bool shouldForceNext = false;
 int updateFrequency = MILLISECONDS_HOUR;
 int wateringTime = 2000;
-int maxWateringTemperature = 25;
+int maxWateringTemperature = 35;
 
 // Json-data values
 float latestTemperature = 0.0;
@@ -30,6 +30,8 @@ bool didWater = false;
 
 int waterPump = 6;
 
+I2CSoilMoistureSensor sensor;
+
 void setup() {
   Serial.begin(9600);
 
@@ -37,12 +39,14 @@ void setup() {
   
   digitalWrite(waterPump, HIGH);
   pinMode(waterPump, OUTPUT);
-  pinMode(moistureSensor,INPUT);
   
   while (!humiditySensor.begin()) {
     Serial.println("NOT FOUND");
     delay(1000);
   }
+  Wire.begin();
+  delay(1000); // give some  time to boot up
+
   Serial.println("Connecting to Wi-Fi and Firebase");
   Firebase.begin(FIREBASE_URL, FIREBASE_SECRET, WIFI_SSID, WIFI_PASSWORD);
   Firebase.reconnectWiFi(true);
@@ -98,11 +102,17 @@ void updateSettings() {
   getShouldForce();
 }
 
+unsigned int readCapacitance(){
+  sensor.getCapacitance();
+  while (sensor.isBusy()) delay(50);
+  return sensor.getCapacitance();
+}
+
 void measureMoisture() {
   didWater = false;
   
   int rawValue = readAverageMoisture();
-  int moistureLevelReal = map(rawValue, 740, sensorReference, 0, 100);
+  int moistureLevelReal = map(rawValue, 260, sensorReference, 0, 100);
   moistureLevelReal = constrain(moistureLevelReal, 0, 100);
 
   Serial.println("Raw");
@@ -127,7 +137,7 @@ int readAverageMoisture() {
   int numberOfMeasurements = 7;
 
   for (int i = 0; i < numberOfMeasurements; i++) {
-    int newReading = analogRead(moistureSensor);
+    int newReading = readCapacitance();
     moistureTotal += newReading;
     Serial.println(newReading);
     delay(100);
@@ -151,8 +161,7 @@ void measureTemperature() {
 }
 
 void turnOffMoistureSensor() {
-  pinMode(moistureSensor, OUTPUT);
-  digitalWrite(moistureSensor, LOW);
+  sensor.sleep();
 }
 
 void updateMaxTemp() {
