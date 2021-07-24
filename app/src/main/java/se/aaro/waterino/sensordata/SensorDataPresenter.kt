@@ -6,7 +6,8 @@ import android.os.Handler
 import com.google.android.gms.tasks.OnCompleteListener
 
 
-class SensorDataPresenter(val view: SensorDataContract.View, context: Context): SensorDataContract.Presenter {
+class SensorDataPresenter(val view: SensorDataContract.View, context: Context) :
+    SensorDataContract.Presenter {
 
     var model: SensorDataModel
 
@@ -14,7 +15,7 @@ class SensorDataPresenter(val view: SensorDataContract.View, context: Context): 
     lateinit var timeUpdateRunnable: Runnable
     private val notificationsEnabledKey = "ENABLE_NOTIFICATION"
 
-    private val preferences = context.getSharedPreferences("settings",Application.MODE_PRIVATE);
+    private val preferences = context.getSharedPreferences("settings", Application.MODE_PRIVATE);
 
 
     init {
@@ -22,8 +23,8 @@ class SensorDataPresenter(val view: SensorDataContract.View, context: Context): 
 
         model = SensorDataModel(this)
         timeUpdateRunnable = Runnable {
-            view.updateTimeViews(model.lastUpdate,model.nextUpdate)
-            timeUpdaterHandler.postDelayed(timeUpdateRunnable,10000)
+            view.updateTimeViews(model.lastUpdate, model.nextUpdate)
+            timeUpdaterHandler.postDelayed(timeUpdateRunnable, 10000)
         }
         timeUpdaterHandler.post(timeUpdateRunnable)
 
@@ -31,47 +32,67 @@ class SensorDataPresenter(val view: SensorDataContract.View, context: Context): 
     }
 
     override fun setupNotifications() {
-        val enableNotifications = preferences.getBoolean(notificationsEnabledKey,false)
-        model.setNotificationsEnabled(enableNotifications,null)
+        val enableNotifications = preferences.getBoolean(notificationsEnabledKey, false)
+        model.setNotificationsEnabled(enableNotifications, null)
         view.setNotificationsEnabled(enableNotifications)
     }
 
     override fun onNewSensorData(data: List<WateringData>) {
         var wateredAmount = 0.0
         data.forEach {
-            if(it.wateredPlant){
-                wateredAmount += it.wateredAmount*0.0001
+            if (it.wateredPlant) {
+                wateredAmount += it.wateredAmount * 0.0001
             }
         }
         view.updateWateredAmount(wateredAmount)
-        view.updateLatestData(data.maxBy{ it.time }!!)
+        if (data.isNotEmpty()) {
+            view.updateLatestData(data.maxBy { it.time }!!)
+        }
         view.updatePlot(data
-                .sortedBy { it.time}
+            .sortedBy { it.time }
         )
-        view.updateTimeViews(model.lastUpdate,model.nextUpdate)
+        view.updateTimeViews(model.lastUpdate, model.nextUpdate)
     }
 
-    override fun onUserEnableChange(enabled: Boolean, onCompleteListener: OnCompleteListener<Void>?) {
+    override fun onUserEnableChange(
+        enabled: Boolean,
+        onCompleteListener: OnCompleteListener<Void>?
+    ) {
         model.setEnabled(enabled, onCompleteListener)
     }
 
-    override fun onUserWateringAmountChange(amount: Int, onCompleteListener: OnCompleteListener<Void>?) {
-        model.setWateringAmount(amount,onCompleteListener)
+    override fun onUserWateringAmountChange(
+        amount: Int,
+        onCompleteListener: OnCompleteListener<Void>?
+    ) {
+        model.setWateringAmount(amount, onCompleteListener)
     }
 
-    override fun onUserUpdateFrequencyChange(hours: Double, onCompleteListener: OnCompleteListener<Void>?) {
-        model.setUpdateFrequency(hours,onCompleteListener)
+    override fun onUserUpdateFrequencyChange(
+        hours: Double,
+        onCompleteListener: OnCompleteListener<Void>?
+    ) {
+        model.setUpdateFrequency(hours, onCompleteListener)
     }
 
-    override fun onUserMaxWateringTempChange(temperature: Int, onCompleteListener: OnCompleteListener<Void>?) {
-        model.setMaxWateringTemperature(temperature,onCompleteListener)
+    override fun onUserMaxWateringTempChange(
+        temperature: Int,
+        onCompleteListener: OnCompleteListener<Void>?
+    ) {
+        model.setMaxWateringTemperature(temperature, onCompleteListener)
     }
 
-    override fun onUserForceNextChange(forceNext: Boolean, onCompleteListener: OnCompleteListener<Void>?) {
+    override fun onUserForceNextChange(
+        forceNext: Boolean,
+        onCompleteListener: OnCompleteListener<Void>?
+    ) {
         model.setForceNext(forceNext, onCompleteListener)
     }
 
-    override fun onUserThresholdChange(threshold: Int, onCompleteListener: OnCompleteListener<Void>?) {
+    override fun onUserThresholdChange(
+        threshold: Int,
+        onCompleteListener: OnCompleteListener<Void>?
+    ) {
         model.setThreshold(threshold, onCompleteListener)
     }
 
@@ -100,8 +121,16 @@ class SensorDataPresenter(val view: SensorDataContract.View, context: Context): 
     }
 
     override fun onUserChangeNotificationsEnabled(enabled: Boolean) {
-        preferences.edit().putBoolean(notificationsEnabledKey,enabled).apply()
+        preferences.edit().putBoolean(notificationsEnabledKey, enabled).apply()
         model.setNotificationsEnabled(enabled, null)
+    }
+
+    override fun onLastDataResetChange(lastReset: Long) {
+        view.setLastDataResetDate(lastReset)
+    }
+
+    override fun onUserResetData() {
+        model.resetData()
     }
 
 

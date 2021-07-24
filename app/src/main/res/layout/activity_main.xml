@@ -1,22 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:app="http://schemas.android.com/apk/res-auto"
-            xmlns:tools="http://schemas.android.com/tools"
-            xmlns:card_view="http://schemas.android.com/apk/res-auto"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/background"
-            tools:context=".sensordata.MainActivity">
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    tools:context=".sensordata.MainActivity">
 
     <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:id="@+id/outer_container"
-            android:orientation="vertical">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:id="@+id/outer_container"
+        android:orientation="vertical">
 
         <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
+            android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@android:color/white"
                 card_view:cardCornerRadius="4dp">
@@ -141,45 +140,85 @@
                             android:orientation="horizontal">
 
                         <Switch
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:id="@+id/force_next"/>
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:id="@+id/force_next" />
 
                     </LinearLayout>
 
                 </LinearLayout>
 
                 <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="8dp"
-                        android:weightSum="20">
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="20">
 
                     <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_weight="20"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
                             android:layout_width="0dp"
-                            android:layout_weight="20"
+                            android:layout_weight="7"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal">
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:text="Last data reset:" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_weight="8"
+                            android:layout_height="wrap_content"
+                            android:textSize="14sp"
+                            android:id="@+id/last_reset_button"
+                            tools:text="2010-01-01" />
+
+                        <Button
+                            android:layout_width="0dp"
+                            android:layout_weight="5"
+                            android:layout_height="wrap_content"
+                            android:id="@+id/reset_data_button"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:text="Reset" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:weightSum="20">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_weight="20"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
                         <com.google.android.material.textfield.TextInputLayout
-                                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content">
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
 
                             <com.google.android.material.textfield.TextInputEditText
-                                    android:layout_width="250dp"
-                                    android:layout_height="match_parent"
-                                    android:maxLength="2"
-                                    android:inputType="numberSigned"
-                                    android:gravity="bottom"
-                                    android:focusable="true"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:text=""
-                                    android:hint="Watering threshold (%)"
-                                    android:focusableInTouchMode="true"
-                                    android:imeOptions="actionDone"
-                                    android:id="@+id/set_watering_threshold"/>
+                                android:layout_width="250dp"
+                                android:layout_height="match_parent"
+                                android:maxLength="2"
+                                android:inputType="numberSigned"
+                                android:gravity="bottom"
+                                android:focusable="true"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:text=""
+                                android:hint="Watering threshold (%)"
+                                android:focusableInTouchMode="true"
+                                android:imeOptions="actionDone"
+                                android:id="@+id/set_watering_threshold"/>
 
                         </com.google.android.material.textfield.TextInputLayout>
 
@@ -350,12 +389,12 @@
                             android:text="Last updated:"/>
 
                     <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:textSize="14sp"
-                            android:id="@+id/latest_timestamp"
-                            android:layout_weight="5"
-                            android:text="an hour ago"/>
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:id="@+id/latest_timestamp"
+                        android:layout_weight="5"
+                        tools:text="an hour ago" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -373,12 +412,12 @@
                             android:text="Soil moisture:"/>
 
                     <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:textSize="14sp"
-                            android:id="@+id/latest_moisture"
-                            android:layout_weight="3"
-                            android:text="87%"/>
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:id="@+id/latest_moisture"
+                        android:layout_weight="3"
+                        tools:text="87%" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -396,12 +435,12 @@
                             android:text="Temperature:"/>
 
                     <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:textSize="14sp"
-                            android:id="@+id/latest_temperature"
-                            android:layout_weight="3"
-                            android:text="23 C"/>
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:id="@+id/latest_temperature"
+                        android:layout_weight="3"
+                        tools:text="23 C" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -419,12 +458,12 @@
                             android:text="Humidity:"/>
 
                     <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:textSize="14sp"
-                            android:id="@+id/latest_humidity"
-                            android:layout_weight="3"
-                            android:text="34%"/>
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:id="@+id/latest_humidity"
+                        android:layout_weight="3"
+                        tools:text="34%" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -442,12 +481,12 @@
                             android:text="Watered:"/>
 
                     <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:textSize="14sp"
-                            android:id="@+id/watered"
-                            android:layout_weight="3"
-                            android:text="Yes"/>
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:id="@+id/watered"
+                        android:layout_weight="3"
+                        tools:text="Yes" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -490,12 +529,12 @@
                             android:text="Time until next measurement:"/>
 
                     <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:textSize="11sp"
-                            android:id="@+id/time_until_next"
-                            android:layout_weight="3"
-                            android:text="4 hours"/>
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:textSize="11sp"
+                        android:id="@+id/time_until_next"
+                        android:layout_weight="3"
+                        tools:text="4 hours" />
                 </LinearLayout>
 
             </LinearLayout>

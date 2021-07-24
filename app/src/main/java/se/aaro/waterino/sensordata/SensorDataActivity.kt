@@ -17,7 +17,6 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_main.*
 import se.aaro.waterino.R
@@ -72,23 +71,27 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         }
 
         settings_card.setOnClickListener { v ->
-            when(isSettingsExpanded){
-                true -> settings_container.collapse(object: Animation.AnimationListener{
+            when (isSettingsExpanded) {
+                true -> settings_container.collapse(object : Animation.AnimationListener {
                     override fun onAnimationRepeat(p0: Animation?) {}
                     override fun onAnimationStart(p0: Animation?) {
-                        expand_collapse_button.animate().rotation(0F).setDuration(400).setInterpolator(AnticipateOvershootInterpolator()).start()
+                        expand_collapse_button.animate().rotation(0F).setDuration(400)
+                            .setInterpolator(AnticipateOvershootInterpolator()).start()
                     }
+
                     override fun onAnimationEnd(p0: Animation?) {
                         isSettingsExpanded = false
                     }
                 })
-                false -> settings_container.expand(object: Animation.AnimationListener{
+                false -> settings_container.expand(object : Animation.AnimationListener {
                     override fun onAnimationRepeat(p0: Animation?) {}
                     override fun onAnimationStart(p0: Animation?) {
-                        expand_collapse_button.animate().rotation(180F).setDuration(400).setInterpolator(
-                            AnticipateOvershootInterpolator()
-                        ).start()
+                        expand_collapse_button.animate().rotation(180F).setDuration(400)
+                            .setInterpolator(
+                                AnticipateOvershootInterpolator()
+                            ).start()
                     }
+
                     override fun onAnimationEnd(p0: Animation?) {
                         isSettingsExpanded = true
                     }
@@ -105,17 +108,22 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
                     val newThreshold = set_watering_threshold.text.toString().toInt()
                     if (newThreshold < 0) throw IllegalArgumentException()
 
-                    presenter.onUserThresholdChange(newThreshold, object : OnCompleteListener<Void> {
-                        override fun onComplete(p0: Task<Void>) {
-                            Toast.makeText(this@MainActivity, "Threshold set to $newThreshold", Toast.LENGTH_LONG)
+                    presenter.onUserThresholdChange(
+                        newThreshold,
+                        OnCompleteListener {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Threshold set to $newThreshold",
+                                Toast.LENGTH_LONG
+                            )
                                 .show()
                             set_watering_threshold.isEnabled = true
-                        }
-                    })
+                        })
 
                 } catch (e: java.lang.Exception) {
                     set_watering_threshold.isEnabled = true
-                    Toast.makeText(this, "Threshold must be a signed integer", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Threshold must be a signed integer", Toast.LENGTH_LONG)
+                        .show()
                 }
                 true
             } else {
@@ -130,16 +138,16 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
                     val newFrequency = set_update_frequency.text.toString().toDouble()
                     if (newFrequency < 0) throw IllegalArgumentException()
 
-                    presenter.onUserUpdateFrequencyChange(newFrequency, object : OnCompleteListener<Void> {
-                        override fun onComplete(p0: Task<Void>) {
+                    presenter.onUserUpdateFrequencyChange(
+                        newFrequency,
+                        OnCompleteListener {
                             Toast.makeText(
                                 this@MainActivity,
                                 "Update frequency set to $newFrequency hours",
                                 Toast.LENGTH_LONG
                             ).show()
                             set_update_frequency.isEnabled = true
-                        }
-                    })
+                        })
 
                 } catch (e: java.lang.Exception) {
                     set_update_frequency.isEnabled = true
@@ -158,16 +166,24 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
                     val newAmount = set_watering_amount.text.toString().toInt()
                     if (newAmount < 0) throw IllegalArgumentException()
 
-                    presenter.onUserWateringAmountChange(newAmount, object : OnCompleteListener<Void> {
-                        override fun onComplete(p0: Task<Void>) {
-                            Toast.makeText(this@MainActivity, "Amount set to $newAmount", Toast.LENGTH_LONG).show()
+                    presenter.onUserWateringAmountChange(
+                        newAmount,
+                        OnCompleteListener {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Amount set to $newAmount",
+                                Toast.LENGTH_LONG
+                            ).show()
                             set_watering_amount.isEnabled = true
-                        }
-                    })
+                        })
 
                 } catch (e: java.lang.Exception) {
                     set_watering_amount.isEnabled = true
-                    Toast.makeText(this, "Watering amount must be a signed integer", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Watering amount must be a signed integer",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
                 true
             } else {
@@ -182,15 +198,13 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
                     val newMaxtemp = set_max_temperature.text.toString().toInt()
                     if (newMaxtemp < 0) throw IllegalArgumentException()
 
-                    presenter.onUserMaxWateringTempChange(newMaxtemp, object : OnCompleteListener<Void> {
-                        override fun onComplete(p0: Task<Void>) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Maximum watering temperature set to $newMaxtemp",
-                                Toast.LENGTH_LONG
-                            ).show()
-                            set_max_temperature.isEnabled = true
-                        }
+                    presenter.onUserMaxWateringTempChange(newMaxtemp, OnCompleteListener {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Maximum watering temperature set to $newMaxtemp",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        set_max_temperature.isEnabled = true
                     })
 
                 } catch (e: java.lang.Exception) {
@@ -201,6 +215,10 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
             } else {
                 false
             }
+        }
+
+        reset_data_button.setOnClickListener {
+            presenter.onUserResetData()
         }
 
         outer_container.setOnClickListener {
@@ -215,18 +233,18 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         try {
             threshold = set_watering_threshold.text.toString().toInt()
             maxTemp = set_max_temperature.text.toString().toInt()
-        } catch (e: NumberFormatException){
+        } catch (e: NumberFormatException) {
             return
         }
         mp_chart.axisLeft.removeAllLimitLines()
 
-        val moistureLimit  = LimitLine(threshold.toFloat(), "Moisture threshold")
+        val moistureLimit = LimitLine(threshold.toFloat(), "Moisture threshold")
         moistureLimit.lineWidth = 4f
         moistureLimit.lineColor = getColor(R.color.colorPrimary)
         moistureLimit.enableDashedLine(10f, 10f, 0f)
         moistureLimit.textSize = 10f
 
-        val maxTempLine  = LimitLine(maxTemp.toFloat(), "Maximum watering temperature")
+        val maxTempLine = LimitLine(maxTemp.toFloat(), "Maximum watering temperature")
         maxTempLine.lineWidth = 4f
         maxTempLine.lineColor = getColor(R.color.tempColor)
         maxTempLine.enableDashedLine(10f, 10f, 0f)
@@ -235,6 +253,12 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         mp_chart.axisLeft.addLimitLine(moistureLimit)
         mp_chart.axisLeft.addLimitLine(maxTempLine)
         mp_chart.invalidate()
+    }
+
+    override fun setLastDataResetDate(lastReset: Long) {
+        val date = Date(lastReset)
+        val format = SimpleDateFormat("yyyy-MM-dd")
+        last_reset_button.text = format.format(date)
     }
 
     override fun updateTimeViews(lastUpdate: Long, nextUpdate: Long) {
@@ -246,7 +270,8 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
 
 
     override fun updatePlot(sensorData: List<WateringData>) {
-        val gaveWaterEntries = sensorData.filter { it.wateredPlant }.map { Entry(it.time.toFloat(), it.moisture.toFloat()) }
+        val gaveWaterEntries = sensorData.filter { it.wateredPlant }
+            .map { Entry(it.time.toFloat(), it.moisture.toFloat()) }
         val moistureEntries = sensorData.map { Entry(it.time.toFloat(), it.moisture.toFloat()) }
         val humidityEntries = sensorData.map { Entry(it.time.toFloat(), it.humidity.toFloat()) }
         val tempEntries = sensorData.map { Entry(it.time.toFloat(), it.temperature) }
@@ -267,7 +292,7 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         gaveWaterDataSet.setDrawValues(false)
         gaveWaterDataSet.setCircleColor(getColor(R.color.colorAccent))
         gaveWaterDataSet.lineWidth = 0f
-        gaveWaterDataSet.enableDashedLine(0f,1000f,3f)
+        gaveWaterDataSet.enableDashedLine(0f, 1000f, 3f)
         gaveWaterDataSet.setDrawCircleHole(false)
 
         humidityDataSet.color = getColor(R.color.humidityColor)
@@ -308,7 +333,7 @@ class MainActivity : AppCompatActivity(), SensorDataContract.View {
         mp_chart.invalidate()
         mp_chart.description.isEnabled = false
 
-        mp_chart.zoom(1f,1f,0f,0f)
+        mp_chart.zoom(1f, 1f, 0f, 0f)
         mp_chart.moveViewToX((System.currentTimeMillis()).toFloat())
 
         updateThresholdLine()

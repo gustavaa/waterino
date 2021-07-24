@@ -20,6 +20,7 @@ interface SensorDataContract {
 
         fun setNotificationsEnabled(enabled: Boolean, onCompleteListener: OnCompleteListener<Void>?)
 
+        fun resetData()
     }
 
     interface View {
@@ -48,6 +49,7 @@ interface SensorDataContract {
 
         fun setNotificationsEnabled(enabled: Boolean)
 
+        fun setLastDataResetDate(lastReset: Long)
     }
 
     interface Presenter {
@@ -82,5 +84,8 @@ interface SensorDataContract {
 
         fun onUserChangeNotificationsEnabled(enabled: Boolean)
 
+        fun onLastDataResetChange(date: Long)
+
+        fun onUserResetData()
     }
 }
