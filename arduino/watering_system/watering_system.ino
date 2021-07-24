@@ -53,9 +53,10 @@ void setup() {
 }
 
 void loop() {
+  Firebase.reconnectWiFi(true);
   Serial.println("Getting Enabled setting from Firebase");
   bool success = Firebase.getBool(firebaseData, "/enableWatering");
-
+  sensor.begin(true);
   if (success) {
     if (firebaseData.dataType() == "boolean" && firebaseData.boolData()) {
       updateSettings();
@@ -89,7 +90,7 @@ void loop() {
     measureTemperature();
     sendMeasurementsToFirebase();
   }
-
+  sensor.sleep();
   delay(updateFrequency);
 }
 

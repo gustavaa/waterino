@@ -22,7 +22,7 @@ void loop() {
 
 void measureMoisture() {
   int rawValue = readAverageMoisture();
-  int moistureLevelReal = map(rawValue, 705, 345, 0, 100);
+  int moistureLevelReal = map(rawValue, 610, 365, 0, 100);
   moistureLevelReal = constrain(moistureLevelReal, 0, 100);
 
   Serial.println(rawValue);
