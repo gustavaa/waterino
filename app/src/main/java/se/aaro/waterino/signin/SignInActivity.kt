@@ -12,8 +12,8 @@ import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import kotlinx.android.synthetic.main.activity_sign_in.*
 import se.aaro.waterino.R
+import se.aaro.waterino.databinding.ActivitySignInBinding
 
 
 class SignInActivity : AppCompatActivity() {
@@ -24,9 +24,10 @@ class SignInActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_sign_in)
-        sign_in_button.setSize(SignInButton.SIZE_WIDE)
-        sign_in_button.setOnClickListener {
+        val binding = ActivitySignInBinding.inflate(this.layoutInflater)
+        setContentView(binding.root)
+        binding.signInButton.setSize(SignInButton.SIZE_WIDE)
+        binding.signInButton.setOnClickListener {
             signIn()
         }
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)

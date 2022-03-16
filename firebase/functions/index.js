@@ -15,10 +15,10 @@ exports.sendNewDataNotification = functions.database
     const payload = {
       notification: {
         title: `New data from Waterino available!`,
-        body: `Moisture: ${
-          snapshot.val().moisture
-        }%\nTemperature: ${snapshot
-          .val()
+        body: 
+        `Moisture: ${snapshot.val().moisture }%\n
+        Temperature: ${snapshot
+.val()
           .temperature.toFixed(2)}°C \nHumididty: ${
           snapshot.val().humidity
         }%\nWatered: ${snapshot.val().wateredPlant ? "Yes" : "No"}`,

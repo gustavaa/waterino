@@ -4,9 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnticipateOvershootInterpolator
-import android.view.animation.BounceInterpolator
 import android.view.animation.Transformation
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import kotlin.math.roundToInt
 
 
@@ -84,7 +82,7 @@ fun View.expand(listener: Animation.AnimationListener?) {
     startAnimation(a)
 }
 
-fun View.collapse(listener: Animation.AnimationListener?) {
+fun View.collapse(listener: Animation.AnimationListener? = null) {
     val initialHeight: Int = measuredHeight
     val a: Animation = object : Animation() {
         override fun applyTransformation(
