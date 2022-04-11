@@ -226,7 +226,7 @@ void getShouldForce() {
 
 
 void resetShouldForce() {
-  Firebase.setBool(firebaseData, "/forceNextWatering", false);
+  Firebase.setBool(firebaseData, "/settings/forceNextWatering", false);
   shouldForceNext = false;
 }
 
