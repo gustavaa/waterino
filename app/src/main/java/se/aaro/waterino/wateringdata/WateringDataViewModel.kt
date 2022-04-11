@@ -121,7 +121,8 @@ class WateringDataViewModel @Inject constructor(
         wateringThreshold: Int = this.wateringThreshold,
         updateFrequency: Double = this.updateFrequency,
         wateringAmountMl: Int = this.wateringVolumeMl,
-        maxWateringTemperature: Int = this.maxWateringTemperature
+        maxWateringTemperature: Int = this.maxWateringTemperature,
+        sensorReferenceValue: Int = this.sensorReferenceValue
     ): WaterinoSettings = WaterinoSettings(
         pushNotificationsEnabled,
         waterinoEnabled,
@@ -130,6 +131,7 @@ class WateringDataViewModel @Inject constructor(
         wateringThreshold,
         updateFrequency,
         wateringAmountMl,
-        maxWateringTemperature
+        maxWateringTemperature,
+        sensorReferenceValue
     )
 }

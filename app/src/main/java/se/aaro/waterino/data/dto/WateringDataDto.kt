@@ -9,5 +9,4 @@ data class WateringDataDto(
     val moistureRaw: Int = 0,
     val nextUpdate: Long = 0,
     val wateredAmount: Int = 0
-) {
-}
+)
