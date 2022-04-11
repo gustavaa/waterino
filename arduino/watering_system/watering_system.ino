@@ -3,7 +3,6 @@
 #include <Arduino_JSON.h>
 #include "config.h"
 #include <I2CSoilMoistureSensor.h>
-#include <Wire.h>
 
 #define STABILIZATION_TIME 1000 // Let the sensor stabilize before reading
 #define MILLISECONDS_HOUR 3600000
@@ -15,7 +14,9 @@ FirebaseData firebaseData;
 
 SI7021 humiditySensor;
 int moistureThreshold = 55;
-int sensorReference = 450;
+int sensorReference = 800;
+int sensorPin = A4;
+
 bool shouldForceNext = false;
 int updateFrequency = MILLISECONDS_HOUR;
 int wateringTime = 2000;
@@ -30,21 +31,22 @@ bool didWater = false;
 
 int waterPump = 6;
 
-I2CSoilMoistureSensor sensor;
-
 void setup() {
   Serial.begin(9600);
 
   Serial.println("Setup");
-  
+
   digitalWrite(waterPump, HIGH);
   pinMode(waterPump, OUTPUT);
-  
+
+
+  pinMode(sensorPin, OUTPUT);
+  digitalWrite(sensorPin, LOW);
+
   while (!humiditySensor.begin()) {
     Serial.println("NOT FOUND");
     delay(1000);
   }
-  Wire.begin();
   delay(1000); // give some  time to boot up
 
   Serial.println("Connecting to Wi-Fi and Firebase");
@@ -55,8 +57,7 @@ void setup() {
 void loop() {
   Firebase.reconnectWiFi(true);
   Serial.println("Getting Enabled setting from Firebase");
-  bool success = Firebase.getBool(firebaseData, "/enableWatering");
-  sensor.begin(true);
+  bool success = Firebase.getBool(firebaseData, "/settings/enableWatering");
   if (success) {
     if (firebaseData.dataType() == "boolean" && firebaseData.boolData()) {
       updateSettings();
@@ -90,7 +91,6 @@ void loop() {
     measureTemperature();
     sendMeasurementsToFirebase();
   }
-  sensor.sleep();
   delay(updateFrequency);
 }
 
@@ -103,17 +103,11 @@ void updateSettings() {
   getShouldForce();
 }
 
-unsigned int readCapacitance(){
-  sensor.getCapacitance();
-  while (sensor.isBusy()) delay(50);
-  return sensor.getCapacitance();
-}
-
 void measureMoisture() {
   didWater = false;
-  
+
   int rawValue = readAverageMoisture();
-  int moistureLevelReal = map(rawValue, 260, sensorReference, 0, 100);
+  int moistureLevelReal = map(rawValue, 150, sensorReference, 0, 100);
   moistureLevelReal = constrain(moistureLevelReal, 0, 100);
 
   Serial.println("Raw");
@@ -134,16 +128,21 @@ void measureMoisture() {
 }
 
 int readAverageMoisture() {
+  pinMode(sensorPin, INPUT_PULLUP); // Power on the sensor
+  analogRead(sensorPin);// Read once to let the ADC capacitor start charging
+  delay(STABILIZATION_TIME);
+
   int moistureTotal = 0;
   int numberOfMeasurements = 7;
 
   for (int i = 0; i < numberOfMeasurements; i++) {
-    int newReading = readCapacitance();
+    int newReading = analogRead(sensorPin);
     moistureTotal += newReading;
     Serial.println(newReading);
     delay(100);
   }
-
+  pinMode(sensorPin, OUTPUT);
+  digitalWrite(sensorPin, LOW);
   return round(moistureTotal / numberOfMeasurements);
 }
 
@@ -161,12 +160,8 @@ void measureTemperature() {
   return;
 }
 
-void turnOffMoistureSensor() {
-  sensor.sleep();
-}
-
 void updateMaxTemp() {
-  bool success = Firebase.getInt(firebaseData, "/maxWateringTemperature");
+  bool success = Firebase.getInt(firebaseData, "/settings/maxWateringTemperature");
   if (success) {
     if (firebaseData.dataType() == "int") {
       maxWateringTemperature = firebaseData.intData();
@@ -177,7 +172,7 @@ void updateMaxTemp() {
 }
 
 void updateWateringTime() {
-  bool success = Firebase.getInt(firebaseData, "/wateringTimeMillis");
+  bool success = Firebase.getInt(firebaseData, "/settings/wateringTimeMillis");
   if (success) {
     if (firebaseData.dataType() == "int") {
       wateringTime = firebaseData.intData();
@@ -188,7 +183,7 @@ void updateWateringTime() {
 }
 
 void updateFreqency() {
-  bool success = Firebase.getFloat(firebaseData, "/updateFrequencyHours");
+  bool success = Firebase.getFloat(firebaseData, "/settings/updateFrequencyHours");
   if (success) {
     updateFrequency = round(firebaseData.floatData() * MILLISECONDS_HOUR);
     Serial.println("Update frequency:");
@@ -197,7 +192,7 @@ void updateFreqency() {
 }
 
 void updateThreshold() {
-  bool success = Firebase.getInt(firebaseData, "/wateringThreshold");
+  bool success = Firebase.getInt(firebaseData, "/settings/wateringThreshold");
   if (success) {
     if (firebaseData.dataType() == "int") {
       moistureThreshold = firebaseData.intData();
@@ -208,7 +203,7 @@ void updateThreshold() {
 }
 
 void updateReferenceValue() {
-  bool success = Firebase.getInt(firebaseData, "/sensorReferenceValue");
+  bool success = Firebase.getInt(firebaseData, "/settings/sensorReferenceValue");
   if (success) {
     if (firebaseData.dataType() == "int") {
       sensorReference = firebaseData.intData();
@@ -219,7 +214,7 @@ void updateReferenceValue() {
 }
 
 void getShouldForce() {
-  bool success = Firebase.getBool(firebaseData, "/forceNextWatering");
+  bool success = Firebase.getBool(firebaseData, "/settings/forceNextWatering");
   if (success) {
     if (firebaseData.dataType() == "boolean") {
       shouldForceNext = firebaseData.boolData();
