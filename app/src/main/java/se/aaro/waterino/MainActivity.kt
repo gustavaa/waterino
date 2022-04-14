@@ -251,7 +251,7 @@ class MainActivity : AppCompatActivity() {
         val humidityEntries = sensorData.map { Entry(it.time.toFloat(), it.humidity) }
         val tempEntries = sensorData.map { Entry(it.time.toFloat(), it.temperature) }
 
-        val moistureDataSet = LineDataSet(moistureEntries, "Soil moisture")
+        val moistureDataSet = LineDataSet(moistureEntries, "VWC")
         val humidityDataSet = LineDataSet(humidityEntries, "Humidity")
         val tempDataSet = LineDataSet(tempEntries, "Temperature")
         val gaveWaterDataSet = LineDataSet(gaveWaterEntries, "Gave water")

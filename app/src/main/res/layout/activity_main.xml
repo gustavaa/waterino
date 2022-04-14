@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-    tools:context=".sensordata.MainActivity">
+    tools:context=".MainActivity">
 
     <LinearLayout
         android:id="@+id/outer_container"
@@ -213,7 +213,7 @@
                                 android:focusable="true"
                                 android:focusableInTouchMode="true"
                                 android:gravity="bottom"
-                                android:hint="Watering threshold (%)"
+                                android:hint="VWC Watering threshold [%]"
                                 android:imeOptions="actionDone"
                                 android:inputType="numberSigned"
                                 android:maxLength="2"
@@ -255,7 +255,7 @@
                                 android:focusable="true"
                                 android:focusableInTouchMode="true"
                                 android:gravity="bottom"
-                                android:hint="Update frequency (hours)"
+                                android:hint="Update frequency [hours]"
                                 android:imeOptions="actionDone"
                                 android:inputType="numberDecimal"
                                 android:maxLength="8"
@@ -295,7 +295,7 @@
                                 android:focusable="true"
                                 android:focusableInTouchMode="true"
                                 android:gravity="bottom"
-                                android:hint="Watering volume (ml)"
+                                android:hint="Watering volume [ml]"
                                 android:imeOptions="actionDone"
                                 android:inputType="numberSigned"
                                 android:maxLength="4"
@@ -334,7 +334,7 @@
                                 android:focusable="true"
                                 android:focusableInTouchMode="true"
                                 android:gravity="bottom"
-                                android:hint="Maximum watering temperature"
+                                android:hint="Maximum watering temperature [°C]"
                                 android:imeOptions="actionDone"
                                 android:inputType="numberSigned"
                                 android:maxLength="2"
@@ -408,7 +408,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
-                        android:text="Soil moisture:"
+                        android:text="VWC:"
                         android:textColor="?android:attr/textColorSecondary"
                         android:textSize="14sp" />
 
