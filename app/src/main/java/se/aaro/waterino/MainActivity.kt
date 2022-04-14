@@ -64,14 +64,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun setUpViews() {
         binding.apply {
-            enableNotificationsChip.setOnCheckedChangeListener { _, isChecked ->
+            enableNotificationsChip.setOnClickListener {
                 lifecycleScope.launch {
-                    viewModel.onUiAction(UiAction.SetPushNotificationsEnabled(isChecked))
+                    viewModel.onUiAction(
+                        UiAction.SetPushNotificationsEnabled(enableNotificationsChip.isChecked)
+                    )
                 }
             }
-            forceNext.setOnCheckedChangeListener { _, isChecked ->
+            forceNext.setOnClickListener {
                 lifecycleScope.launch {
-                    viewModel.onUiAction(UiAction.SetForceNextWateringEnabled(isChecked)).apply {
+                    viewModel.onUiAction(
+                        UiAction.SetForceNextWateringEnabled(forceNext.isChecked)
+                    ).apply {
                         exceptionOrNull()?.let {
                             showToast(it.localizedMessage ?: "Something went wrong")
                             updateViews(viewModel.uiState.value)
@@ -79,14 +83,15 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            enableWateringChip.setOnCheckedChangeListener { _, isChecked ->
+            enableWateringChip.setOnClickListener {
                 lifecycleScope.launch {
-                    viewModel.onUiAction(UiAction.SetWaterinoEnabled(isChecked)).apply {
-                        exceptionOrNull()?.let {
-                            showToast(it.localizedMessage ?: "Something went wrong")
-                            updateViews(viewModel.uiState.value)
+                    viewModel.onUiAction(UiAction.SetWaterinoEnabled(enableWateringChip.isChecked))
+                        .apply {
+                            exceptionOrNull()?.let {
+                                showToast(it.localizedMessage ?: "Something went wrong")
+                                updateViews(viewModel.uiState.value)
+                            }
                         }
-                    }
                 }
             }
             resetDataButton.setOnClickListener {
@@ -177,13 +182,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateViews(uiState: UiState = viewModel.uiState.value) {
         binding.apply {
-
             uiState.settingsState.apply {
                 enableNotificationsChip.isChecked = pushNotificationsEnabled
                 enableWateringChip.isChecked = waterinoEnabled
                 forceNext.isChecked = forceNextWatering
 
-                lastResetButton.text = lastDataReset
+                lastResetButton.text = viewModel.getResetDateString()
                 setWateringThreshold.setText(wateringThreshold.toString())
                 setUpdateFrequency.setText(updateFrequency.toString())
                 setWateringVolume.setText(wateringVolumeMl.toString())

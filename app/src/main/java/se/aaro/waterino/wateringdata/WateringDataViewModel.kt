@@ -14,6 +14,8 @@ import se.aaro.waterino.data.ui.WateringData
 import se.aaro.waterino.data.ui.WaterinoSettings
 import se.aaro.waterino.wateringdata.WateringDataViewModel.UiAction.SetPushNotificationsEnabled
 import se.aaro.waterino.wateringdata.usecase.*
+import java.text.SimpleDateFormat
+import java.util.*
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -30,6 +32,13 @@ class WateringDataViewModel @Inject constructor(
 
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
+
+    fun getResetDateString(): String =
+        SimpleDateFormat(
+            "yyyy-MM-dd",
+            Locale.getDefault()
+        ).format(uiState.value.settingsState.lastDataReset)
+
 
     sealed class UiAction {
         data class SetPushNotificationsEnabled(val enabled: Boolean) : UiAction()
@@ -67,7 +76,9 @@ class WateringDataViewModel @Inject constructor(
 
     suspend fun onUiAction(uiAction: UiAction): Result<Unit> {
         return when (uiAction) {
-            is SetPushNotificationsEnabled -> setPushNotificationEnabledUseCase(uiAction.enabled)
+            is SetPushNotificationsEnabled -> {
+                setPushNotificationEnabledUseCase(uiAction.enabled)
+            }
             UiAction.ResetData -> resetDataUseCase()
             is UiAction.SetForceNextWateringEnabled -> updateSettingsUseCase(
                 uiState.value.settingsState.modify(
@@ -117,7 +128,7 @@ class WateringDataViewModel @Inject constructor(
         pushNotificationsEnabled: Boolean = this.pushNotificationsEnabled,
         waterinoEnabled: Boolean = this.waterinoEnabled,
         forceNextWatering: Boolean = this.forceNextWatering,
-        lastDataReset: String = this.lastDataReset,
+        lastDataReset: Long = this.lastDataReset,
         wateringThreshold: Int = this.wateringThreshold,
         updateFrequency: Double = this.updateFrequency,
         wateringAmountMl: Int = this.wateringVolumeMl,

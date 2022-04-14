@@ -4,7 +4,7 @@ data class WaterinoSettings(
     val pushNotificationsEnabled: Boolean = false,
     val waterinoEnabled: Boolean = false,
     val forceNextWatering: Boolean = false,
-    val lastDataReset: String = "",
+    val lastDataReset: Long = 0L,
     val wateringThreshold: Int = 0,
     val updateFrequency: Double = 0.0,
     val wateringVolumeMl: Int = 0,
