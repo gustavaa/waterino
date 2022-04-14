@@ -16,6 +16,7 @@ SI7021 humiditySensor;
 int moistureThreshold = 55;
 int sensorReference = 800;
 int sensorPin = A4;
+float refVoltage = 3.3;                 // set reference voltage
 
 bool shouldForceNext = false;
 int updateFrequency = MILLISECONDS_HOUR;
@@ -106,19 +107,19 @@ void updateSettings() {
 void measureMoisture() {
   didWater = false;
 
-  int rawValue = readAverageMoisture();
-  int moistureLevelReal = map(rawValue, 150, sensorReference, 0, 100);
-  moistureLevelReal = constrain(moistureLevelReal, 0, 100);
+  int rawValue = readAverageRawAdc();
+  float vwc = getVwcFromRawAdc(rawValue);
 
   Serial.println("Raw");
   Serial.println(rawValue);
-  Serial.println("Real");
-  Serial.println(moistureLevelReal);
-  
-  latestMoisture = moistureLevelReal;
+  Serial.println("VWC");
+  Serial.println(vwc);
+
+  latestMoisture = vwc;
   latestRaw = rawValue;
 
-  if (shouldForceNext || (latestMoisture < moistureThreshold && latestTemperature <= maxWateringTemperature)) {
+  if (shouldForceNext ||
+      (latestMoisture < moistureThreshold && latestTemperature <= maxWateringTemperature)) {
     resetShouldForce();
     didWater = true;
     water();
@@ -127,23 +128,24 @@ void measureMoisture() {
   return;
 }
 
-int readAverageMoisture() {
-  pinMode(sensorPin, INPUT_PULLUP); // Power on the sensor
-  analogRead(sensorPin);// Read once to let the ADC capacitor start charging
-  delay(STABILIZATION_TIME);
+float getVwcFromRawAdc(int rawValue) {
+  float voltage = rawValue * refVoltage / 1023.0f;
+  return (2.8432f * voltage * voltage * voltage) - (9.1993f * voltage * voltage) +
+         (20.2553f * voltage) - 4.1882f;
+}
 
-  int moistureTotal = 0;
+int readAverageRawAdc() {
+
+  int rawAdcTotal = 0;
   int numberOfMeasurements = 7;
 
   for (int i = 0; i < numberOfMeasurements; i++) {
     int newReading = analogRead(sensorPin);
-    moistureTotal += newReading;
+    rawAdcTotal += newReading;
     Serial.println(newReading);
     delay(100);
   }
-  pinMode(sensorPin, OUTPUT);
-  digitalWrite(sensorPin, LOW);
-  return round(moistureTotal / numberOfMeasurements);
+  return round(rawAdcTotal / numberOfMeasurements);
 }
 
 void water() {
