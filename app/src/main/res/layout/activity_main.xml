@@ -71,6 +71,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="10"
+                        android:gravity="center_vertical"
                         android:text="Push notifications:"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -100,6 +101,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="10"
+                        android:gravity="center_vertical"
                         android:text="Enable Waterino:"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -129,6 +131,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="10"
+                        android:gravity="center_vertical"
                         android:text="Force next watering:"
                         android:textSize="14sp"
                         android:textStyle="bold" />

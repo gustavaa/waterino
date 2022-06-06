@@ -20,7 +20,6 @@ class SignInActivity : AppCompatActivity() {
 
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var auth: FirebaseAuth
-    private val RC_SIGN_IN = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,13 +39,13 @@ class SignInActivity : AppCompatActivity() {
     }
 
     private fun signIn() {
-        val signInIntent: Intent = googleSignInClient.getSignInIntent()
-        startActivityForResult(signInIntent, RC_SIGN_IN )
+        val signInIntent: Intent = googleSignInClient.signInIntent
+        startActivityForResult(signInIntent, RC_SIGN_IN)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == RC_SIGN_IN){
+        if (requestCode == RC_SIGN_IN) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
                 // Google Sign In was successful, authenticate with Firebase
@@ -73,9 +72,16 @@ class SignInActivity : AppCompatActivity() {
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w("SignIn", "signInWithCredential:failure", task.exception)
-                    Toast.makeText(this, "Login failed: ${task.exception.toString()}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Login failed: ${task.exception.toString()}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
     }
 
+    companion object {
+        private const val RC_SIGN_IN = 1
+    }
 }

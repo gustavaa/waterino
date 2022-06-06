@@ -14,8 +14,6 @@ import androidx.lifecycle.lifecycleScope
 import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
-import com.github.mikephil.charting.data.LineData
-import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
@@ -26,6 +24,7 @@ import se.aaro.waterino.data.ui.WateringData
 import se.aaro.waterino.databinding.ActivityMainBinding
 import se.aaro.waterino.signin.SignInActivity
 import se.aaro.waterino.utils.collapse
+import se.aaro.waterino.utils.createChartLineData
 import se.aaro.waterino.utils.expand
 import se.aaro.waterino.view.CustomMarkerView
 import se.aaro.waterino.wateringdata.WateringDataViewModel
@@ -47,9 +46,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)
         setUpViews()
-        viewModel.uiState
-            .onEach { updateViews(it) }
-            .launchIn(lifecycleScope)
     }
 
     override fun onResume() {
@@ -60,6 +56,9 @@ class MainActivity : AppCompatActivity() {
             val signInIntent = Intent(this, SignInActivity::class.java)
             startActivity(signInIntent)
         }
+        viewModel.uiState
+            .onEach { updateViews(it) }
+            .launchIn(lifecycleScope)
     }
 
     private fun setUpViews() {
@@ -151,7 +150,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             settingsContainer.collapse()
-            settingsCard.setOnClickListener { v ->
+            settingsCard.setOnClickListener {
                 when (isSettingsExpanded) {
                     true -> settingsContainer.collapse(object : Animation.AnimationListener {
                         override fun onAnimationRepeat(p0: Animation?) {}
@@ -245,43 +244,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updatePlot(sensorData: List<WateringData>) {
-        val gaveWaterEntries = sensorData.filter { it.gaveWater }
-            .map { Entry(it.time.toFloat(), it.moisture) }
-        val moistureEntries = sensorData.map { Entry(it.time.toFloat(), it.moisture) }
-        val humidityEntries = sensorData.map { Entry(it.time.toFloat(), it.humidity) }
-        val tempEntries = sensorData.map { Entry(it.time.toFloat(), it.temperature) }
-
-        val moistureDataSet = LineDataSet(moistureEntries, "VWC")
-        val humidityDataSet = LineDataSet(humidityEntries, "Humidity")
-        val tempDataSet = LineDataSet(tempEntries, "Temperature")
-        val gaveWaterDataSet = LineDataSet(gaveWaterEntries, "Gave water")
-
-        moistureDataSet.color = getColor(R.color.colorPrimary)
-        moistureDataSet.lineWidth = 3f
-        moistureDataSet.setDrawValues(false)
-        moistureDataSet.setDrawCircles(false)
-        moistureDataSet.setDrawCircleHole(false)
-
-        gaveWaterDataSet.circleRadius = 5f
-        gaveWaterDataSet.color = getColor(R.color.colorAccent)
-        gaveWaterDataSet.setDrawValues(false)
-        gaveWaterDataSet.setCircleColor(getColor(R.color.colorAccent))
-        gaveWaterDataSet.lineWidth = 0f
-        gaveWaterDataSet.enableDashedLine(0f, 1000f, 3f)
-        gaveWaterDataSet.setDrawCircleHole(false)
-
-        humidityDataSet.color = getColor(R.color.humidityColor)
-        humidityDataSet.setDrawCircleHole(false)
-        humidityDataSet.setDrawCircles(false)
-        humidityDataSet.setDrawValues(false)
-        humidityDataSet.lineWidth = 3f
-
-        tempDataSet.color = getColor(R.color.tempColor)
-        tempDataSet.setDrawCircleHole(false)
-        tempDataSet.setDrawCircles(false)
-        tempDataSet.setDrawValues(false)
-        tempDataSet.lineWidth = 3f
-
         val xAxis = binding.mpChart.xAxis
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.valueFormatter = object : IndexAxisValueFormatter() {
@@ -309,8 +271,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.mpChart.rendererRightYAxis
         binding.mpChart.marker = CustomMarkerView(this, sensorData, binding.mpChart)
-        binding.mpChart.data =
-            LineData(moistureDataSet, humidityDataSet, tempDataSet, gaveWaterDataSet)
+        binding.mpChart.data = createChartLineData(sensorData, this)
         binding.mpChart.invalidate()
         binding.mpChart.description.isEnabled = false
 

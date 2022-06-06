@@ -12,11 +12,19 @@ class SharedPreferencesRepository @Inject constructor(
         private const val PLANT_DATA_FIREBASE_TOPIC = "plantData"
     }
 
+    init {
+        updateTopicSubscription()
+    }
+
     var pushNotificationsEnabled: Boolean
         get() = preferences.getBoolean(PUSH_NOTIFICATIONS_ENABLED, true)
         set(enabled) {
             preferences.edit().putBoolean(PUSH_NOTIFICATIONS_ENABLED, enabled).apply()
-            if (enabled) FirebaseMessaging.getInstance().subscribeToTopic(PLANT_DATA_FIREBASE_TOPIC)
-            else FirebaseMessaging.getInstance().unsubscribeFromTopic(PLANT_DATA_FIREBASE_TOPIC)
+            updateTopicSubscription(enabled)
         }
+
+    private fun updateTopicSubscription(enabled: Boolean = pushNotificationsEnabled) {
+        if (enabled) FirebaseMessaging.getInstance().subscribeToTopic(PLANT_DATA_FIREBASE_TOPIC)
+        else FirebaseMessaging.getInstance().unsubscribeFromTopic(PLANT_DATA_FIREBASE_TOPIC)
+    }
 }

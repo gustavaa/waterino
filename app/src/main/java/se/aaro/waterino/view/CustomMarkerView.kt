@@ -24,7 +24,6 @@ class CustomMarkerView(context: Context, val chartData: List<WateringData?>, val
 
     override fun refreshContent(e: Entry?, highlight: Highlight?) {
         val dataPoint = chartData.find { it!!.time.toFloat() == e!!.x }
-        println(e!!.x)
         binding.date.text =
             SimpleDateFormat("HH:mm MM-dd").format(Date(dataPoint!!.time)).toString()
         binding.markerHumidity.text = String.format("%f", dataPoint.humidity)

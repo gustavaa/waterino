@@ -124,7 +124,7 @@ class WateringDataViewModel @Inject constructor(
     )
 
 
-    fun WaterinoSettings.modify(
+    private fun WaterinoSettings.modify(
         pushNotificationsEnabled: Boolean = this.pushNotificationsEnabled,
         waterinoEnabled: Boolean = this.waterinoEnabled,
         forceNextWatering: Boolean = this.forceNextWatering,
