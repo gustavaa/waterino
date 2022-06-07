@@ -22,6 +22,9 @@ class UpdateSettingsUseCase @Inject constructor(
         )
 
     suspend operator fun invoke(newSettings: WaterinoSettings): Result<Unit> =
-        wateringDataRepository.setWaterinoSettings(newSettings.toSettingsDto())
+        newSettings.takeUnless { it == WaterinoSettings() }
+            ?.let {
+                wateringDataRepository.setWaterinoSettings(it.toSettingsDto())
+            } ?: Result.failure(RuntimeException("Refused to update with empty settings"))
 
 }
