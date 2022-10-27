@@ -1,6 +1,7 @@
 package se.aaro.waterino.wateringdata
 
 import android.content.SharedPreferences
+import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
 import javax.inject.Inject
 
@@ -19,6 +20,7 @@ class SharedPreferencesRepository @Inject constructor(
     var pushNotificationsEnabled: Boolean
         get() = preferences.getBoolean(PUSH_NOTIFICATIONS_ENABLED, true)
         set(enabled) {
+            Log.d(javaClass.simpleName, "Subscribing to topic: $enabled")
             preferences.edit().putBoolean(PUSH_NOTIFICATIONS_ENABLED, enabled).apply()
             updateTopicSubscription(enabled)
         }

@@ -1,11 +1,12 @@
 package se.aaro.waterino.wateringdata
 
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
@@ -30,15 +31,13 @@ class WateringDataViewModel @Inject constructor(
 
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState())
-    val uiState: StateFlow<UiState> = _uiState
+    private val _uiState: MutableState<UiState> = mutableStateOf(UiState())
+    val uiState: State<UiState> = _uiState
 
-    fun getResetDateString(): String =
-        SimpleDateFormat(
-            "yyyy-MM-dd",
-            Locale.getDefault()
-        ).format(uiState.value.settingsState.lastDataReset)
-
+    fun formatResetString(timestamp: Long) = SimpleDateFormat(
+        "yyyy-MM-dd",
+        Locale.getDefault()
+    ).format(timestamp)
 
     sealed class UiAction {
         data class SetPushNotificationsEnabled(val enabled: Boolean) : UiAction()
@@ -77,7 +76,15 @@ class WateringDataViewModel @Inject constructor(
     suspend fun onUiAction(uiAction: UiAction): Result<Unit> {
         return when (uiAction) {
             is SetPushNotificationsEnabled -> {
-                setPushNotificationEnabledUseCase(uiAction.enabled)
+                setPushNotificationEnabledUseCase(uiAction.enabled).also {
+                    if (it.isSuccess) {
+                        _uiState.value = mergeUiStates(
+                            settingsState = uiState.value.settingsState.copy(
+                                pushNotificationsEnabled = uiAction.enabled
+                            )
+                        )
+                    }
+                }
             }
             UiAction.ResetData -> resetDataUseCase()
             is UiAction.SetForceNextWateringEnabled -> updateSettingsUseCase(
@@ -101,7 +108,7 @@ class WateringDataViewModel @Inject constructor(
                 )
             )
             is UiAction.SetWateringThreshold -> updateSettingsUseCase(
-                uiState.value.settingsState.modify(
+                uiState.value.settingsState.copy(
                     wateringThreshold = uiAction.threshold
                 )
             )

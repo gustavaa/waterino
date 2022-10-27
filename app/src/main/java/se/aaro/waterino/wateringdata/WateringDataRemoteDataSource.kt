@@ -69,7 +69,7 @@ class WateringDataRemoteDataSource(firebaseDatabase: FirebaseDatabase) {
     suspend fun setWateringSettings(settingsDto: SettingsDto): Result<Unit> {
         val result = CompletableDeferred<Result<Unit>>()
         settingsRef.setValue(settingsDto)
-            .addOnCompleteListener {
+            .addOnSuccessListener {
                 result.complete(Result.success(Unit))
             }
             .addOnCanceledListener {
@@ -85,7 +85,7 @@ class WateringDataRemoteDataSource(firebaseDatabase: FirebaseDatabase) {
         val result = CompletableDeferred<Result<Unit>>()
         val resetTime = System.currentTimeMillis()
         settingsRef.child("lastReset").setValue(resetTime)
-            .addOnCompleteListener {
+            .addOnSuccessListener {
                 result.complete(Result.success(Unit))
             }
             .addOnCanceledListener {

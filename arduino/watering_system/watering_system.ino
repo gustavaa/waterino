@@ -2,13 +2,16 @@
 #include "Firebase_Arduino_WiFiNINA.h"
 #include <Arduino_JSON.h>
 #include "config.h"
-#include <I2CSoilMoistureSensor.h>
+#include <millisDelay.h>
 
 #define STABILIZATION_TIME 1000 // Let the sensor stabilize before reading
 #define MILLISECONDS_HOUR 3600000
 #define MILLISECONDS_MINUTE 60000
 #define WATERING_WAIT_TIME MILLISECONDS_MINUTE*10
+#define REBOOT_DELAY_MS MILLISECONDS_HOUR*24
 
+// periodic reboot
+millisDelay rebootDelay;
 
 FirebaseData firebaseData;
 
@@ -33,9 +36,10 @@ bool didWater = false;
 int waterPump = 6;
 
 void setup() {
-  Serial.begin(9600);
 
-  Serial.println("Setup");
+  rebootDelay.start(REBOOT_DELAY_MS); // start reboot timer
+
+  Serial.begin(9600);
 
   digitalWrite(waterPump, HIGH);
   pinMode(waterPump, OUTPUT);
@@ -45,26 +49,27 @@ void setup() {
   digitalWrite(sensorPin, LOW);
 
   while (!humiditySensor.begin()) {
-    Serial.println("NOT FOUND");
+    Serial.println("HUMIDITY SEBSOR NOT FOUND");
     delay(1000);
   }
   delay(1000); // give some  time to boot up
 
-  Serial.println("Connecting to Wi-Fi and Firebase");
   Firebase.begin(FIREBASE_URL, FIREBASE_SECRET, WIFI_SSID, WIFI_PASSWORD);
   Firebase.reconnectWiFi(true);
 }
 
 void loop() {
+  if (rebootDelay.justFinished()) {
+    NVIC_SystemReset(); // force watch dog timer reboot
+  }
+  
   Firebase.reconnectWiFi(true);
-  Serial.println("Getting Enabled setting from Firebase");
   bool success = Firebase.getBool(firebaseData, "/settings/enableWatering");
   if (success) {
     if (firebaseData.dataType() == "boolean" && firebaseData.boolData()) {
       updateSettings();
 
       measureTemperature();
-      Serial.println("MOISTURE");
       measureMoisture();
       sendMeasurementsToFirebase();
 
@@ -110,10 +115,10 @@ void measureMoisture() {
   int rawValue = readAverageRawAdc();
   float vwc = getVwcFromRawAdc(rawValue);
 
-  Serial.println("Raw");
-  Serial.println(rawValue);
-  Serial.println("VWC");
-  Serial.println(vwc);
+  // Serial.println("Raw");
+  // Serial.println(rawValue);
+  // Serial.println("VWC");
+  // Serial.println(vwc);
 
   latestMoisture = vwc;
   latestRaw = rawValue;
@@ -123,8 +128,7 @@ void measureMoisture() {
     resetShouldForce();
     didWater = true;
     water();
-  }
-
+  } 
   return;
 }
 
@@ -142,14 +146,13 @@ int readAverageRawAdc() {
   for (int i = 0; i < numberOfMeasurements; i++) {
     int newReading = analogRead(sensorPin);
     rawAdcTotal += newReading;
-    Serial.println(newReading);
     delay(100);
   }
   return round(rawAdcTotal / numberOfMeasurements);
 }
 
 void water() {
-  Serial.println("Watering");
+  // Serial.println("Watering");
   digitalWrite(waterPump, LOW);
   delay(wateringTime);
   digitalWrite(waterPump, HIGH);
@@ -167,8 +170,8 @@ void updateMaxTemp() {
   if (success) {
     if (firebaseData.dataType() == "int") {
       maxWateringTemperature = firebaseData.intData();
-      Serial.println("Max temperature:");
-      Serial.println(maxWateringTemperature);
+      // Serial.println("Max temperature:");
+      // Serial.println(maxWateringTemperature);
     }
   }
 }
@@ -178,8 +181,8 @@ void updateWateringTime() {
   if (success) {
     if (firebaseData.dataType() == "int") {
       wateringTime = firebaseData.intData();
-      Serial.println("Watering time:");
-      Serial.println(wateringTime);
+      // Serial.println("Watering time:");
+      // Serial.println(wateringTime);
     }
   }
 }
@@ -188,8 +191,8 @@ void updateFreqency() {
   bool success = Firebase.getFloat(firebaseData, "/settings/updateFrequencyHours");
   if (success) {
     updateFrequency = round(firebaseData.floatData() * MILLISECONDS_HOUR);
-    Serial.println("Update frequency:");
-    Serial.println(updateFrequency);
+    // Serial.println("Update frequency:");
+    // Serial.println(updateFrequency);
   }
 }
 
@@ -198,8 +201,8 @@ void updateThreshold() {
   if (success) {
     if (firebaseData.dataType() == "int") {
       moistureThreshold = firebaseData.intData();
-      Serial.println("Moisture threshold:");
-      Serial.println(moistureThreshold);
+      // Serial.println("Moisture threshold:");
+      // Serial.println(moistureThreshold);
     }
   }
 }
@@ -209,8 +212,8 @@ void updateReferenceValue() {
   if (success) {
     if (firebaseData.dataType() == "int") {
       sensorReference = firebaseData.intData();
-      Serial.println("Reference:");
-      Serial.println(sensorReference);
+      // Serial.println("Reference:");
+      // Serial.println(sensorReference);
     }
   }
 }
@@ -220,8 +223,8 @@ void getShouldForce() {
   if (success) {
     if (firebaseData.dataType() == "boolean") {
       shouldForceNext = firebaseData.boolData();
-      Serial.println("Force next:");
-      Serial.println(shouldForceNext);
+      // Serial.println("Force next:");
+      // Serial.println(shouldForceNext);
     }
   }
 }
@@ -232,9 +235,8 @@ void resetShouldForce() {
   shouldForceNext = false;
 }
 
-
 void sendMeasurementsToFirebase() {
-  Serial.println("Sending data");
+  // Serial.println("Sending data");
   JSONVar sensorData;
   JSONVar timeStamp;
   timeStamp[".sv"] = "timestamp";
@@ -257,11 +259,13 @@ void sendMeasurementsToFirebase() {
   String jsonString = JSON.stringify(sensorData);
 
   if (Firebase.pushJSON(firebaseData, "/wateringdata", jsonString)) {
-    Serial.println(firebaseData.dataPath());
-    Serial.println(firebaseData.pushName());
+    // Serial.println(firebaseData.dataPath());
+    // Serial.println(firebaseData.pushName());
     Serial.println(firebaseData.dataPath() + "/" + firebaseData.pushName());
   } else {
     //Failed, then print out the error detail
     Serial.println(firebaseData.errorReason());
   }
+  delete sensorData;
+  delete timeStamp;
 }
