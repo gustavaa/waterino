@@ -28,10 +28,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,6 +68,7 @@ import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import se.aaro.waterino.data.ui.WateringData
+import se.aaro.waterino.data.ui.WateringMode
 import se.aaro.waterino.signin.SignInActivity
 import se.aaro.waterino.utils.createChartLineData
 import se.aaro.waterino.view.CustomMarkerView
@@ -98,6 +103,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun SensorDataScreen() {
         val scrollState = rememberScrollState(0)
+        val uiState by viewModel.uiState.collectAsState()
         WaterinoTheme {
             Column(
                 modifier = Modifier
@@ -107,28 +113,39 @@ class MainActivity : ComponentActivity() {
                 ExpandableCard("Settings") {
                     SettingsToggle(
                         title = "Push notifications",
-                        checked = viewModel.uiState.value.settingsState.pushNotificationsEnabled
+                        checked = uiState.settingsState.pushNotificationsEnabled,
                     ) { performAction(UiAction.SetPushNotificationsEnabled(it)) }
 
                     SettingsToggle(
-                        title = "Enable Waterino",
-                        checked = viewModel.uiState.value.settingsState.waterinoEnabled
+                        title = "Enable Waterino", checked = uiState.settingsState.waterinoEnabled,
                     ) { performAction(UiAction.SetWaterinoEnabled(it)) }
 
-                    SettingsToggle(
-                        title = "Force next watering",
-                        checked = viewModel.uiState.value.settingsState.forceNextWatering
-                    ) { performAction(UiAction.SetForceNextWateringEnabled(it)) }
+                    WateringModeRadioSelector(uiState)
 
                     ResetDataRow(
                         lastDataReset = viewModel.formatResetString(
-                            viewModel.uiState.value.settingsState.lastDataReset
+                            uiState.settingsState.lastDataReset
                         )
                     ) { performAction(UiAction.ResetData) }
 
+                    Spacer(Modifier.height(20.dp))
+
+                    Text(
+                        text = "Automatic watering settings: ",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+
+                    SettingsToggle(
+                        title = "Force next watering",
+                        checked = uiState.settingsState.forceNextWatering,
+                        enabled = uiState.settingsState.wateringMode == WateringMode.AUTOMATIC
+                    ) { performAction(UiAction.SetForceNextWateringEnabled(it)) }
+
+
                     IntInputField(
                         hint = "VWC Watering threshold [%]",
-                        value = viewModel.uiState.value.settingsState.wateringThreshold.toString()
+                        value = uiState.settingsState.wateringThreshold.toString(),
+                        enabled = uiState.settingsState.wateringMode == WateringMode.AUTOMATIC
                     ) {
                         performAction(
                             action = UiAction.SetWateringThreshold(it),
@@ -138,7 +155,8 @@ class MainActivity : ComponentActivity() {
 
                     DoubleInputField(
                         hint = "Update frequency [hours]",
-                        value = viewModel.uiState.value.settingsState.updateFrequency.toString()
+                        value = uiState.settingsState.updateFrequency.toString(),
+                        enabled = uiState.settingsState.wateringMode == WateringMode.AUTOMATIC
                     ) {
                         performAction(
                             action = UiAction.SetUpdateFrequencyHours(it),
@@ -147,7 +165,8 @@ class MainActivity : ComponentActivity() {
                     }
                     IntInputField(
                         hint = "Watering volume [ml]",
-                        value = viewModel.uiState.value.settingsState.wateringVolumeMl.toString()
+                        value = uiState.settingsState.wateringVolumeMl.toString(),
+                        enabled = uiState.settingsState.wateringMode == WateringMode.AUTOMATIC
                     ) {
                         performAction(
                             action = UiAction.SetWateringVolumeMl(it),
@@ -156,7 +175,8 @@ class MainActivity : ComponentActivity() {
                     }
                     IntInputField(
                         hint = "Maximum watering temperature [°C]",
-                        value = viewModel.uiState.value.settingsState.maxWateringTemperature.toString()
+                        value = uiState.settingsState.maxWateringTemperature.toString(),
+                        enabled = uiState.settingsState.wateringMode == WateringMode.AUTOMATIC
                     ) {
                         performAction(
                             action = UiAction.SetWateringThreshold(it),
@@ -164,76 +184,136 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    Spacer(Modifier.height(20.dp))
+                    Text(
+                        text = "Fixed frequency watering settings: ",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                    DoubleInputField(
+                        hint = "Watering frequency [hours]",
+                        value = uiState.settingsState.updateFrequency.toString(),
+                        enabled = uiState.settingsState.wateringMode == WateringMode.FIXED_FREQUENCY
+                    ) {
+                        performAction(
+                            action = UiAction.SetUpdateFrequencyHours(it),
+                            successMessage = "Set watering frequency to $it hours"
+                        )
+                    }
+                    IntInputField(
+                        hint = "Watering volume [ml]",
+                        value = uiState.settingsState.wateringVolumeMl.toString(),
+                        enabled = uiState.settingsState.wateringMode == WateringMode.FIXED_FREQUENCY
+                    ) {
+                        performAction(
+                            action = UiAction.SetWateringVolumeMl(it),
+                            successMessage = "Set watering volume to $it ml"
+                        )
+                    }
                 }
                 Spacer(Modifier.height(16.dp))
                 SectionCard("Latest data") {
                     LatestDataRow(
-                        title = "Last updated",
-                        value = viewModel.uiState.value.currentPlantState.lastUpdated
+                        title = "Last updated", value = uiState.currentPlantState.lastUpdated
                     )
                     LatestDataRow(
-                        title = "VWC",
-                        value = "23%"
+                        title = "VWC", value = "23%"
                     )
                     LatestDataRow(
-                        title = "Temperature",
-                        value = viewModel.uiState.value.currentPlantState.temperature
+                        title = "Temperature", value = uiState.currentPlantState.temperature
                     )
                     LatestDataRow(
-                        title = "Humidity",
-                        value = viewModel.uiState.value.currentPlantState.humidity
+                        title = "Humidity", value = uiState.currentPlantState.humidity
                     )
                     LatestDataRow(
-                        title = "Watered",
-                        value = viewModel.uiState.value.currentPlantState.gaveWater
+                        title = "Watered", value = uiState.currentPlantState.gaveWater
                     )
                     Spacer(Modifier.height(8.dp))
                     LatestDataRow(
                         title = "Approximated watered amount",
-                        value = viewModel.uiState.value.currentPlantState.totalWateredAmount,
+                        value = uiState.currentPlantState.totalWateredAmount,
                         fontSize = AppTypography.labelSmall.fontSize
                     )
                     LatestDataRow(
                         title = "Next measurement",
-                        value = viewModel.uiState.value.currentPlantState.nextUpdate,
+                        value = uiState.currentPlantState.nextUpdate,
                         fontSize = AppTypography.labelSmall.fontSize
                     )
                 }
                 Spacer(Modifier.height(16.dp))
                 SensorDataPlot(
-                    sensorData = viewModel.uiState.value.wateringData,
-                    wateringThreshold = viewModel.uiState.value.settingsState.wateringThreshold,
-                    maxWateringTemperature = viewModel.uiState.value.settingsState.maxWateringTemperature
+                    sensorData = uiState.wateringData,
+                    wateringThreshold = uiState.settingsState.wateringThreshold,
+                    maxWateringTemperature = uiState.settingsState.maxWateringTemperature
                 )
+            }
+        }
+    }
+
+    @Composable
+    private fun WateringModeRadioSelector(uiState: WateringDataViewModel.UiState) {
+        Column {
+            Text(
+                text = "Watering mode:",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Automatic",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    RadioButton(
+                        selected = uiState.settingsState.wateringMode == WateringMode.AUTOMATIC,
+                        onClick = {
+                            performAction(UiAction.SetWateringMode(WateringMode.AUTOMATIC))
+                        }
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Fixed frequency",
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    RadioButton(
+                        selected = uiState.settingsState.wateringMode == WateringMode.FIXED_FREQUENCY,
+                        onClick = {
+                            performAction(UiAction.SetWateringMode(WateringMode.FIXED_FREQUENCY))
+                        }
+                    )
+                }
             }
         }
     }
 
     private fun performAction(action: UiAction, successMessage: String? = null) {
         lifecycleScope.launch {
-            viewModel.onUiAction(action)
-                .apply {
-                    exceptionOrNull()?.let {
-                        showToast(it.localizedMessage ?: "Something went wrong")
-                    } ?: run {
-                        successMessage?.let { showToast(it) }
-                    }
+            viewModel.onUiAction(action).apply {
+                exceptionOrNull()?.let {
+                    showToast(it.localizedMessage ?: "Something went wrong")
+                } ?: run {
+                    successMessage?.let { showToast(it) }
                 }
+            }
         }
     }
 
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
     @Composable
     fun ExpandableCard(
-        title: String,
-        content: @Composable ColumnScope.() -> Unit = { }
+        title: String, content: @Composable ColumnScope.() -> Unit = { }
     ) {
         var expandedState by remember { mutableStateOf(false) }
         val expandedIconRotation: Float by animateFloatAsState(if (expandedState) 180f else 0f)
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { expandedState = !expandedState }
-        ) {
+        Card(modifier = Modifier.fillMaxWidth(), onClick = { expandedState = !expandedState }) {
             Box(Modifier.padding(16.dp)) {
                 Column {
                     Row(
@@ -250,8 +330,7 @@ class MainActivity : ComponentActivity() {
                             contentDescription = "",
                             contentScale = ContentScale.Crop,
                             colorFilter = ColorFilter.tint(
-                                md_theme_light_primary,
-                                BlendMode.SrcAtop
+                                md_theme_light_primary, BlendMode.SrcAtop
                             ),
                             modifier = Modifier
                                 .height(42.dp)
@@ -270,8 +349,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     @OptIn(ExperimentalMaterial3Api::class)
     fun SectionCard(
-        title: String,
-        content: @Composable ColumnScope.() -> Unit = { }
+        title: String, content: @Composable ColumnScope.() -> Unit = { }
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -279,8 +357,7 @@ class MainActivity : ComponentActivity() {
             Box(Modifier.padding(16.dp)) {
                 Column {
                     Text(
-                        text = title,
-                        fontWeight = FontWeight(500)
+                        text = title, fontWeight = FontWeight(500)
                     )
                     Spacer(Modifier.height(16.dp))
                     Column(content = content)
@@ -291,9 +368,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun LatestDataRow(
-        title: String,
-        value: String,
-        fontSize: TextUnit = AppTypography.labelLarge.fontSize
+        title: String, value: String, fontSize: TextUnit = AppTypography.labelLarge.fontSize
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(0.6f),
@@ -315,18 +390,24 @@ class MainActivity : ComponentActivity() {
 
 
     @Composable
-    fun SettingsToggle(title: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit = {}) {
+    fun SettingsToggle(
+        title: String,
+        checked: Boolean,
+        enabled: Boolean = true,
+        onCheckedChange: (Boolean) -> Unit = {}
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = "$title:",
+                style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.align(Alignment.CenterVertically)
             )
             Switch(
                 checked = checked,
-                onCheckedChange = onCheckedChange
+                onCheckedChange = onCheckedChange,
+                enabled = enabled
             )
         }
     }
@@ -335,15 +416,18 @@ class MainActivity : ComponentActivity() {
     fun ResetDataRow(lastDataReset: String, onReset: () -> Unit = {}) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                modifier = Modifier.align(Alignment.CenterVertically)
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Last data reset:")
                 Text(
-                    text = "$lastDataReset",
-                    modifier = Modifier.padding(horizontal = 4.dp)
+                    text = "Last data reset:",
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                Text(
+                    text = lastDataReset, modifier = Modifier.padding(horizontal = 4.dp)
                 )
             }
             Button(onReset) {
@@ -353,67 +437,76 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun IntInputField(hint: String, value: String, onEnter: (Int) -> Unit = {}) {
+    fun IntInputField(
+        hint: String,
+        value: String,
+        enabled: Boolean = true,
+        onEnter: (Int) -> Unit = {}
+    ) {
         var text by remember { mutableStateOf(value) }
+        LaunchedEffect(value) {
+            text = value
+        }
         val focusManager = LocalFocusManager.current
         OutlinedTextField(
             value = text,
             label = { Text(hint) },
+            enabled = enabled,
             onValueChange = { newValue -> text = newValue.filter { it.isDigit() } },
             keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Decimal,
-                imeAction = ImeAction.Done
+                keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done
             ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    try {
-                        val newIntValue = text.toInt()
-                        if (newIntValue < 0) throw IllegalArgumentException()
-                        onEnter(newIntValue)
-                        focusManager.clearFocus()
-                    } catch (numberFormatException: NumberFormatException) {
-                        showToast("Expecting a positive integer")
-                    }
+            keyboardActions = KeyboardActions(onDone = {
+                try {
+                    val newIntValue = text.toInt()
+                    if (newIntValue < 0) throw IllegalArgumentException()
+                    onEnter(newIntValue)
+                    focusManager.clearFocus()
+                } catch (numberFormatException: NumberFormatException) {
+                    showToast("Expecting a positive integer")
                 }
-            )
+            })
         )
     }
 
     @Composable
-    fun DoubleInputField(hint: String, value: String, onEnter: (Double) -> Unit = {}) {
+    fun DoubleInputField(
+        hint: String,
+        value: String,
+        enabled: Boolean = true,
+        onEnter: (Double) -> Unit = {}
+    ) {
         var textFieldValue by remember { mutableStateOf(value) }
-        textFieldValue = value
+        LaunchedEffect(value) {
+            textFieldValue = value
+        }
         val focusManager = LocalFocusManager.current
         OutlinedTextField(
             value = textFieldValue,
             label = { Text(hint) },
+            enabled = enabled,
             onValueChange = { newValue ->
                 textFieldValue = newValue.filter { it.isDigit() || it == '.' }
             },
             keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Send
+                keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done
             ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    try {
-                        val newDoubleValue = textFieldValue.toDouble()
-                        if (newDoubleValue < 0) throw IllegalArgumentException()
-                        onEnter(newDoubleValue)
-                        focusManager.clearFocus()
-                    } catch (numberFormatException: NumberFormatException) {
-                        showToast("Expecting a positive double")
-                    }
+            keyboardActions = KeyboardActions(onDone = {
+                try {
+                    val newDoubleValue = textFieldValue.toDouble()
+                    if (newDoubleValue < 0) throw IllegalArgumentException()
+                    onEnter(newDoubleValue)
+                    focusManager.clearFocus()
+                } catch (numberFormatException: NumberFormatException) {
+                    showToast("Expecting a positive double")
                 }
-            )
+            })
         )
     }
 
     @Composable
     fun SensorDataPlot(
-        sensorData: List<WateringData>,
-        wateringThreshold: Int,
-        maxWateringTemperature: Int
+        sensorData: List<WateringData>, wateringThreshold: Int, maxWateringTemperature: Int
     ) {
         val chartView = remember { mutableStateOf<LineChart?>(null) }
         chartView.value?.let { lineCart ->
@@ -421,14 +514,12 @@ class MainActivity : ComponentActivity() {
             updateThresholdLines(lineCart, maxWateringTemperature, wateringThreshold)
         }
         SectionCard("Plot") {
-            AndroidView(
-                modifier = Modifier
-                    .height(300.dp)
-                    .fillMaxWidth(),
-                factory = { context ->
-                    if (chartView.value == null) chartView.value = LineChart(context)
-                    return@AndroidView chartView.value!!
-                })
+            AndroidView(modifier = Modifier
+                .height(300.dp)
+                .fillMaxWidth(), factory = { context ->
+                if (chartView.value == null) chartView.value = LineChart(context)
+                return@AndroidView chartView.value!!
+            })
         }
     }
 
@@ -437,9 +528,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updateThresholdLines(
-        lineChart: LineChart,
-        maxWateringTemperature: Int,
-        wateringThreshold: Int
+        lineChart: LineChart, maxWateringTemperature: Int, wateringThreshold: Int
     ) {
         lineChart.apply {
             axisLeft.removeAllLimitLines()
@@ -464,9 +553,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updatePlot(
-        context: Context,
-        sensorData: List<WateringData>,
-        lineChart: LineChart
+        context: Context, sensorData: List<WateringData>, lineChart: LineChart
     ) {
         val xAxis = lineChart.xAxis
         xAxis.position = XAxis.XAxisPosition.BOTTOM
@@ -474,15 +561,13 @@ class MainActivity : ComponentActivity() {
 
             override fun getFormattedValue(value: Float): String {
                 return SimpleDateFormat(
-                    "HH:mm MM-dd",
-                    Locale.getDefault()
+                    "HH:mm MM-dd", Locale.getDefault()
                 ).format(Date(value.toLong())).toString()
             }
 
             override fun getPointLabel(entry: Entry?): String {
                 return SimpleDateFormat(
-                    "HH:mm MM-dd",
-                    Locale.getDefault()
+                    "HH:mm MM-dd", Locale.getDefault()
                 ).format(Date(entry!!.x.toLong())).toString()
             }
         }
@@ -527,14 +612,10 @@ class MainActivity : ComponentActivity() {
                     LatestDataRow("Watered", "No")
                     Spacer(Modifier.height(8.dp))
                     LatestDataRow(
-                        "Approximated watered amount",
-                        "0.0l",
-                        AppTypography.labelSmall.fontSize
+                        "Approximated watered amount", "0.0l", AppTypography.labelSmall.fontSize
                     )
                     LatestDataRow(
-                        "Next measurement",
-                        "3 minutes",
-                        AppTypography.labelSmall.fontSize
+                        "Next measurement", "3 minutes", AppTypography.labelSmall.fontSize
                     )
                 }
                 Spacer(Modifier.height(16.dp))

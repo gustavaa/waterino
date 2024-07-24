@@ -1,22 +1,28 @@
 package se.aaro.waterino.wateringdata
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import se.aaro.waterino.data.ui.CurrentPlantState
 import se.aaro.waterino.data.ui.WateringData
+import se.aaro.waterino.data.ui.WateringMode
 import se.aaro.waterino.data.ui.WaterinoSettings
 import se.aaro.waterino.wateringdata.WateringDataViewModel.UiAction.SetPushNotificationsEnabled
-import se.aaro.waterino.wateringdata.usecase.*
+import se.aaro.waterino.wateringdata.usecase.GetCurrentPlantStateUseCase
+import se.aaro.waterino.wateringdata.usecase.GetSettingsUseCase
+import se.aaro.waterino.wateringdata.usecase.GetWateringDataUseCase
+import se.aaro.waterino.wateringdata.usecase.ResetDataUseCase
+import se.aaro.waterino.wateringdata.usecase.SetPushNotificationEnabledUseCase
+import se.aaro.waterino.wateringdata.usecase.UpdateSettingsUseCase
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -31,8 +37,8 @@ class WateringDataViewModel @Inject constructor(
 
 ) : ViewModel() {
 
-    private val _uiState: MutableState<UiState> = mutableStateOf(UiState())
-    val uiState: State<UiState> = _uiState
+    private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState())
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     fun formatResetString(timestamp: Long) = SimpleDateFormat(
         "yyyy-MM-dd",
@@ -47,6 +53,7 @@ class WateringDataViewModel @Inject constructor(
         data class SetUpdateFrequencyHours(val updateFrequencyHours: Double) : UiAction()
         data class SetWateringVolumeMl(val wateringVolumeMl: Int) : UiAction()
         data class SetMaximumWateringTemperature(val maximumWateringTemperature: Int) : UiAction()
+        data class SetWateringMode(val wateringMode: WateringMode) : UiAction()
         object ResetData : UiAction()
     }
 
@@ -88,23 +95,23 @@ class WateringDataViewModel @Inject constructor(
             }
             UiAction.ResetData -> resetDataUseCase()
             is UiAction.SetForceNextWateringEnabled -> updateSettingsUseCase(
-                uiState.value.settingsState.modify(
+                uiState.value.settingsState.copy(
                     forceNextWatering = uiAction.forceNext
                 )
             )
             is UiAction.SetMaximumWateringTemperature -> updateSettingsUseCase(
-                uiState.value.settingsState.modify(
+                uiState.value.settingsState.copy(
                     maxWateringTemperature = uiAction.maximumWateringTemperature
                 )
             )
             is UiAction.SetUpdateFrequencyHours -> updateSettingsUseCase(
-                uiState.value.settingsState.modify(
+                uiState.value.settingsState.copy(
                     updateFrequency = uiAction.updateFrequencyHours
                 )
             )
             is UiAction.SetWateringVolumeMl -> updateSettingsUseCase(
-                uiState.value.settingsState.modify(
-                    wateringAmountMl = uiAction.wateringVolumeMl
+                uiState.value.settingsState.copy(
+                    wateringVolumeMl = uiAction.wateringVolumeMl
                 )
             )
             is UiAction.SetWateringThreshold -> updateSettingsUseCase(
@@ -113,8 +120,14 @@ class WateringDataViewModel @Inject constructor(
                 )
             )
             is UiAction.SetWaterinoEnabled -> updateSettingsUseCase(
-                uiState.value.settingsState.modify(
+                uiState.value.settingsState.copy(
                     waterinoEnabled = uiAction.enabled
+                )
+            )
+
+            is UiAction.SetWateringMode -> updateSettingsUseCase(
+                uiState.value.settingsState.copy(
+                    wateringMode = uiAction.wateringMode
                 )
             )
         }
@@ -128,28 +141,5 @@ class WateringDataViewModel @Inject constructor(
         settingsState,
         currentPlantState,
         wateringData
-    )
-
-
-    private fun WaterinoSettings.modify(
-        pushNotificationsEnabled: Boolean = this.pushNotificationsEnabled,
-        waterinoEnabled: Boolean = this.waterinoEnabled,
-        forceNextWatering: Boolean = this.forceNextWatering,
-        lastDataReset: Long = this.lastDataReset,
-        wateringThreshold: Int = this.wateringThreshold,
-        updateFrequency: Double = this.updateFrequency,
-        wateringAmountMl: Int = this.wateringVolumeMl,
-        maxWateringTemperature: Int = this.maxWateringTemperature,
-        sensorReferenceValue: Int = this.sensorReferenceValue
-    ): WaterinoSettings = WaterinoSettings(
-        pushNotificationsEnabled,
-        waterinoEnabled,
-        forceNextWatering,
-        lastDataReset,
-        wateringThreshold,
-        updateFrequency,
-        wateringAmountMl,
-        maxWateringTemperature,
-        sensorReferenceValue
     )
 }

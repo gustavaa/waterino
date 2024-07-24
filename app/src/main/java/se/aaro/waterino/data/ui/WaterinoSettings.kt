@@ -1,5 +1,10 @@
 package se.aaro.waterino.data.ui
 
+enum class WateringMode {
+    AUTOMATIC,
+    FIXED_FREQUENCY
+}
+
 data class WaterinoSettings(
     val pushNotificationsEnabled: Boolean = false,
     val waterinoEnabled: Boolean = false,
@@ -9,5 +14,6 @@ data class WaterinoSettings(
     val updateFrequency: Double = 0.0,
     val wateringVolumeMl: Int = 0,
     val maxWateringTemperature: Int = 0,
-    val sensorReferenceValue: Int = 0
+    val sensorReferenceValue: Int = 0,
+    val wateringMode: WateringMode = WateringMode.AUTOMATIC
 )

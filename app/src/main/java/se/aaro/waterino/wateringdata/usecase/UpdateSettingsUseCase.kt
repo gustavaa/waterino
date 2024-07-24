@@ -18,7 +18,8 @@ class UpdateSettingsUseCase @Inject constructor(
             sensorReferenceValue = sensorReferenceValue,
             updateFrequencyHours = updateFrequency,
             wateringThreshold = wateringThreshold,
-            wateringTimeMillis = wateringVolumeMl * 10
+            wateringTimeMillis = wateringVolumeMl * 10,
+            wateringMode = wateringMode.name
         )
 
     suspend operator fun invoke(newSettings: WaterinoSettings): Result<Unit> =
