@@ -66,11 +66,15 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import se.aaro.waterino.data.ui.WateringData
 import se.aaro.waterino.data.ui.WateringMode
 import se.aaro.waterino.signin.SignInActivity
 import se.aaro.waterino.utils.createChartLineData
+import se.aaro.waterino.utils.getTimeAgo
+import se.aaro.waterino.utils.getTimeUntil
 import se.aaro.waterino.view.CustomMarkerView
 import se.aaro.waterino.wateringdata.WateringDataViewModel
 import se.aaro.waterino.wateringdata.WateringDataViewModel.UiAction
@@ -211,9 +215,25 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 Spacer(Modifier.height(16.dp))
+                var lastUpdated by remember(uiState.currentPlantState.lastUpdated) {
+                    mutableStateOf(getTimeSinceLastUpdate())
+                }
+                var timeUntilNextMeasurement by remember(uiState.currentPlantState.nextUpdate) {
+                    mutableStateOf(getTimeUntilNextMeasurement())
+                }
+
+                LaunchedEffect(Unit) {
+                    while (isActive) {
+                        lastUpdated = getTimeSinceLastUpdate()
+                        timeUntilNextMeasurement = getTimeUntilNextMeasurement()
+                        delay(15000)
+                    }
+                }
+
                 SectionCard("Latest data") {
                     LatestDataRow(
-                        title = "Last updated", value = uiState.currentPlantState.lastUpdated
+                        title = "Last updated",
+                        value = lastUpdated
                     )
                     LatestDataRow(
                         title = "VWC", value = "23%"
@@ -235,7 +255,7 @@ class MainActivity : ComponentActivity() {
                     )
                     LatestDataRow(
                         title = "Next measurement",
-                        value = uiState.currentPlantState.nextUpdate,
+                        value = timeUntilNextMeasurement,
                         fontSize = AppTypography.labelSmall.fontSize
                     )
                 }
@@ -247,6 +267,14 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    private fun getTimeSinceLastUpdate(): String {
+        return viewModel.uiState.value.currentPlantState.lastUpdated?.let { getTimeAgo(it) } ?: "-"
+    }
+
+    private fun getTimeUntilNextMeasurement(): String {
+        return viewModel.uiState.value.currentPlantState.nextUpdate?.let { getTimeUntil(it) } ?: "-"
     }
 
     @Composable

@@ -4,8 +4,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import se.aaro.waterino.data.dto.WateringDataDto
 import se.aaro.waterino.data.ui.CurrentPlantState
-import se.aaro.waterino.utils.getTimeAgo
-import se.aaro.waterino.utils.getTimeUntil
 import se.aaro.waterino.wateringdata.WateringDataRepository
 import javax.inject.Inject
 
@@ -16,13 +14,13 @@ class GetCurrentPlantStateUseCase @Inject constructor(
     private fun transform(value: List<WateringDataDto>): CurrentPlantState =
         value.lastOrNull()?.let { latestWateringData ->
             CurrentPlantState(
-                lastUpdated = getTimeAgo(latestWateringData.time) ?: "",
+                lastUpdated = latestWateringData.time,
                 soilMoisture = "${latestWateringData.moisture}%",
                 temperature = "${latestWateringData.temperature}°C",
                 humidity = "${latestWateringData.humidity}%",
                 gaveWater = if (latestWateringData.wateredPlant) "Yes" else "No",
                 totalWateredAmount = value.sumOf { it.wateredAmount * 0.0001 }.let { "$it l" },
-                nextUpdate = getTimeUntil(latestWateringData.nextUpdate) ?: ""
+                nextUpdate = latestWateringData.time + latestWateringData.nextUpdate
             )
         } ?: CurrentPlantState()
 
