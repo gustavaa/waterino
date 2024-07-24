@@ -1,6 +1,7 @@
 package se.aaro.waterino.di
 
 import android.content.Context
+import android.preference.PreferenceManager
 import com.google.firebase.database.FirebaseDatabase
 import dagger.Module
 import dagger.Provides
@@ -34,7 +35,7 @@ class WaterinoModule {
         @ApplicationContext context: Context
     ): SharedPreferencesRepository =
         SharedPreferencesRepository(
-            androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
+            PreferenceManager.getDefaultSharedPreferences(context)
         )
 
     @Provides
