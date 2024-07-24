@@ -21,9 +21,14 @@ int sensorReference = 800;
 int sensorPin = A4;
 float refVoltage = 3.3;                 // set reference voltage
 
+enum WateringMode {
+    AUTOMATIC,
+    FIXED_FREQ
+};
+enum WateringMode currentWateringMode = FIXED_FREQ;
 bool shouldForceNext = false;
-int updateFrequency = MILLISECONDS_HOUR;
-int wateringTime = 2000;
+int updateFrequency = MILLISECONDS_HOUR * 2;
+int wateringTime = 3500;
 int maxWateringTemperature = 35;
 
 // Json-data values
@@ -73,18 +78,19 @@ void loop() {
       measureMoisture();
       sendMeasurementsToFirebase();
 
-      // Wait 3 minutes after watering, measure moisture again and send data to firebase
-      int maxTimes = 3;
-      int count = 0;
-      while (didWater && count < maxTimes) {
-        delay(WATERING_WAIT_TIME);
-        measureTemperature();
-        measureMoisture();
-        sendMeasurementsToFirebase();
-        updateFrequency = updateFrequency - WATERING_WAIT_TIME - wateringTime;
-        count++;
+      if (currentWateringMode == AUTOMATIC) {
+        // Wait 3 minutes after watering, measure moisture again and send data to firebase
+        int maxTimes = 3;
+        int count = 0;
+        while (didWater && count < maxTimes) {
+          delay(WATERING_WAIT_TIME);
+          measureTemperature();
+          measureMoisture();
+          sendMeasurementsToFirebase();
+          updateFrequency = updateFrequency - WATERING_WAIT_TIME - wateringTime;
+          count++;
+        }
       }
-
     } else {
       Serial.println("Not enabled");
     }
@@ -101,6 +107,7 @@ void loop() {
 }
 
 void updateSettings() {
+  updateWateringMode();
   updateFreqency();
   updateThreshold();
   updateReferenceValue();
@@ -123,8 +130,11 @@ void measureMoisture() {
   latestMoisture = vwc;
   latestRaw = rawValue;
 
-  if (shouldForceNext ||
-      (latestMoisture < moistureThreshold && latestTemperature <= maxWateringTemperature)) {
+  bool shouldWater = currentWateringMode == FIXED_FREQ || shouldForceNext ||
+                     (latestMoisture < moistureThreshold &&
+                      latestTemperature <= maxWateringTemperature);
+
+  if (shouldWater) {
     resetShouldForce();
     didWater = true;
     water();
@@ -196,6 +206,19 @@ void updateFreqency() {
   }
 }
 
+void updateWateringMode() {
+  bool success = Firebase.getString(firebaseData, "/settings/wateringMode");
+  if (success) {
+    String wateringMode = firebaseData.stringData();
+    if (wateringMode == "AUTOMATIC") {
+      currentWateringMode = AUTOMATIC;
+    } else {
+      currentWateringMode = FIXED_FREQ;
+    }
+  }
+}
+
+
 void updateThreshold() {
   bool success = Firebase.getInt(firebaseData, "/settings/wateringThreshold");
   if (success) {
@@ -248,9 +271,12 @@ void sendMeasurementsToFirebase() {
   sensorData["temperature"] = latestTemperature;
   sensorData["wateredPlant"] = didWater;
 
-  if (didWater) {
+  if (didWater && currentWateringMode == AUTOMATIC) {
     sensorData["wateredAmount"] = wateringTime;
     sensorData["nextUpdate"] = WATERING_WAIT_TIME;
+  } else if (currentWateringMode == FIXED_FREQ) {
+    sensorData["wateredAmount"] = wateringTime;
+    sensorData["nextUpdate"] = updateFrequency;
   } else {
     sensorData["wateredAmount"] = 0;
     sensorData["nextUpdate"] = updateFrequency;
