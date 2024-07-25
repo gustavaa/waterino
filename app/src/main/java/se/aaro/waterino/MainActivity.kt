@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -55,7 +54,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.compose.WaterinoTheme
 import com.example.compose.md_theme_light_primary
 import com.example.ui.theme.AppTypography
@@ -86,11 +87,22 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
 
     private val viewModel: WateringDataViewModel by viewModels()
+    private var lastUpdated by mutableStateOf("-")
+    private var timeUntilNextMeasurement by mutableStateOf("-")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             SensorDataScreen()
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                while (isActive) {
+                    lastUpdated = calculateTimeSinceLastUpdate()
+                    timeUntilNextMeasurement = calculateTimeUntilNextMeasurement()
+                    delay(15000)
+                }
+            }
         }
     }
 
@@ -108,6 +120,12 @@ class MainActivity : ComponentActivity() {
     fun SensorDataScreen() {
         val scrollState = rememberScrollState(0)
         val uiState by viewModel.uiState.collectAsState()
+
+        LaunchedEffect(uiState.currentPlantState.lastUpdated) {
+            lastUpdated = calculateTimeSinceLastUpdate()
+            timeUntilNextMeasurement = calculateTimeUntilNextMeasurement()
+        }
+
         WaterinoTheme {
             Column(
                 modifier = Modifier
@@ -215,28 +233,13 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 Spacer(Modifier.height(16.dp))
-                var lastUpdated by remember(uiState.currentPlantState.lastUpdated) {
-                    mutableStateOf(getTimeSinceLastUpdate())
-                }
-                var timeUntilNextMeasurement by remember(uiState.currentPlantState.nextUpdate) {
-                    mutableStateOf(getTimeUntilNextMeasurement())
-                }
-
-                LaunchedEffect(Unit) {
-                    while (isActive) {
-                        lastUpdated = getTimeSinceLastUpdate()
-                        timeUntilNextMeasurement = getTimeUntilNextMeasurement()
-                        delay(15000)
-                    }
-                }
-
                 SectionCard("Latest data") {
                     LatestDataRow(
                         title = "Last updated",
                         value = lastUpdated
                     )
                     LatestDataRow(
-                        title = "VWC", value = "23%"
+                        title = "VWC", value = "${uiState.currentPlantState.soilMoisture}%"
                     )
                     LatestDataRow(
                         title = "Temperature", value = uiState.currentPlantState.temperature
@@ -269,11 +272,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun getTimeSinceLastUpdate(): String {
+    private fun calculateTimeSinceLastUpdate(): String {
         return viewModel.uiState.value.currentPlantState.lastUpdated?.let { getTimeAgo(it) } ?: "-"
     }
 
-    private fun getTimeUntilNextMeasurement(): String {
+    private fun calculateTimeUntilNextMeasurement(): String {
         return viewModel.uiState.value.currentPlantState.nextUpdate?.let { getTimeUntil(it) } ?: "-"
     }
 
@@ -334,7 +337,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
     @Composable
     fun ExpandableCard(
         title: String, content: @Composable ColumnScope.() -> Unit = { }
