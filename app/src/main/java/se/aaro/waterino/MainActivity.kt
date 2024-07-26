@@ -201,7 +201,7 @@ class MainActivity : ComponentActivity() {
                         enabled = uiState.settingsState.wateringMode == WateringMode.AUTOMATIC
                     ) {
                         performAction(
-                            action = UiAction.SetWateringThreshold(it),
+                            action = UiAction.SetMaximumWateringTemperature(it),
                             successMessage = "Set maximum watering temperature to $it°C"
                         )
                     }
@@ -239,7 +239,7 @@ class MainActivity : ComponentActivity() {
                         value = lastUpdated
                     )
                     LatestDataRow(
-                        title = "VWC", value = "${uiState.currentPlantState.soilMoisture}%"
+                        title = "VWC", value = uiState.currentPlantState.soilMoisture
                     )
                     LatestDataRow(
                         title = "Temperature", value = uiState.currentPlantState.temperature
