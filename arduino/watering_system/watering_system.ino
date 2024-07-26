@@ -4,14 +4,16 @@
 #include "config.h"
 #include <millisDelay.h>
 
-#define STABILIZATION_TIME 1000 // Let the sensor stabilize before reading
+#define STABILIZATION_TIME 2000 // Let the sensor stabilize before reading
 #define MILLISECONDS_HOUR 3600000
 #define MILLISECONDS_MINUTE 60000
 #define WATERING_WAIT_TIME MILLISECONDS_MINUTE*10
-#define REBOOT_DELAY_MS MILLISECONDS_HOUR*24
+#define REBOOT_DELAY_MS MILLISECONDS_HOUR*12
 
 // periodic reboot
 millisDelay rebootDelay;
+millisDelay measuringLoop;
+millisDelay settingsUpdateLoop;
 
 FirebaseData firebaseData;
 
@@ -43,12 +45,12 @@ int waterPump = 6;
 void setup() {
 
   rebootDelay.start(REBOOT_DELAY_MS); // start reboot timer
+  settingsUpdateLoop.start(MILLISECONDS_MINUTE*2);
 
   Serial.begin(9600);
 
   digitalWrite(waterPump, HIGH);
   pinMode(waterPump, OUTPUT);
-
 
   pinMode(sensorPin, OUTPUT);
   digitalWrite(sensorPin, LOW);
@@ -61,14 +63,33 @@ void setup() {
 
   Firebase.begin(FIREBASE_URL, FIREBASE_SECRET, WIFI_SSID, WIFI_PASSWORD);
   Firebase.reconnectWiFi(true);
+  performIteration();
 }
 
-void loop() {
+void loop() {   
   if (rebootDelay.justFinished()) {
     NVIC_SystemReset(); // force watch dog timer reboot
   }
-  
-  Firebase.reconnectWiFi(true);
+
+  if (measuringLoop.justFinished()) {
+    performIteration();
+  }
+
+  if (settingsUpdateLoop.justFinished()) {
+    int oldUpdateFreq = updateFrequency;
+    int oldWateringMode = currentWateringMode;
+    updateSettings();
+    if (oldUpdateFreq != updateFrequency || oldWateringMode != currentWateringMode) {
+      Serial.println("New settings received, cancelling measuring loop and restarting");
+      measuringLoop.stop();
+      performIteration();
+    }
+    settingsUpdateLoop.start(MILLISECONDS_MINUTE*2);
+  }
+}
+
+void performIteration() {
+  Serial.println("Performing iteration");
   bool success = Firebase.getBool(firebaseData, "/settings/enableWatering");
   if (success) {
     if (firebaseData.dataType() == "boolean" && firebaseData.boolData()) {
@@ -83,6 +104,7 @@ void loop() {
         int maxTimes = 3;
         int count = 0;
         while (didWater && count < maxTimes) {
+          updateSettings();
           delay(WATERING_WAIT_TIME);
           measureTemperature();
           measureMoisture();
@@ -103,7 +125,7 @@ void loop() {
     measureTemperature();
     sendMeasurementsToFirebase();
   }
-  delay(updateFrequency);
+  measuringLoop.start(updateFrequency);
 }
 
 void updateSettings() {
@@ -122,10 +144,10 @@ void measureMoisture() {
   int rawValue = readAverageRawAdc();
   float vwc = getVwcFromRawAdc(rawValue);
 
-  // Serial.println("Raw");
-  // Serial.println(rawValue);
-  // Serial.println("VWC");
-  // Serial.println(vwc);
+  Serial.println("Raw");
+  Serial.println(rawValue);
+  Serial.println("VWC");
+  Serial.println(vwc);
 
   latestMoisture = vwc;
   latestRaw = rawValue;
@@ -149,6 +171,8 @@ float getVwcFromRawAdc(int rawValue) {
 }
 
 int readAverageRawAdc() {
+  analogRead(sensorPin);
+  delay(STABILIZATION_TIME);
 
   int rawAdcTotal = 0;
   int numberOfMeasurements = 7;
@@ -201,8 +225,8 @@ void updateFreqency() {
   bool success = Firebase.getFloat(firebaseData, "/settings/updateFrequencyHours");
   if (success) {
     updateFrequency = round(firebaseData.floatData() * MILLISECONDS_HOUR);
-    // Serial.println("Update frequency:");
-    // Serial.println(updateFrequency);
+    Serial.println("Update frequency:");
+    Serial.println(updateFrequency);
   }
 }
 
