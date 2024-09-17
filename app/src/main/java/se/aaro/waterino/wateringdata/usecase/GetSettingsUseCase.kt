@@ -22,9 +22,9 @@ class GetSettingsUseCase @Inject constructor(
             lastDataReset = value.lastReset,
             wateringThreshold = value.wateringThreshold,
             updateFrequency = value.updateFrequencyHours,
+            fixedWateringFrequencyHours = value.fixedWateringFrequencyHours,
             wateringVolumeMl = value.wateringTimeMillis / 10,
             maxWateringTemperature = value.maxWateringTemperature,
-            sensorReferenceValue = value.sensorReferenceValue,
             wateringMode = WateringMode.valueOf(value.wateringMode)
         )
 

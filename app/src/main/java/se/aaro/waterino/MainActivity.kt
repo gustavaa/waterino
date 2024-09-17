@@ -150,6 +150,26 @@ class MainActivity : ComponentActivity() {
                         )
                     ) { performAction(UiAction.ResetData) }
 
+                    DoubleInputField(
+                        hint = "Update frequency [hours]",
+                        value = uiState.settingsState.updateFrequency.toString(),
+                    ) {
+                        performAction(
+                            action = UiAction.SetUpdateFrequencyHours(it),
+                            successMessage = "Set update frequency to $it hours"
+                        )
+                    }
+
+                    IntInputField(
+                        hint = "Watering volume [ml]",
+                        value = uiState.settingsState.wateringVolumeMl.toString()
+                    ) {
+                        performAction(
+                            action = UiAction.SetWateringVolumeMl(it),
+                            successMessage = "Set watering volume to $it ml"
+                        )
+                    }
+
                     Spacer(Modifier.height(20.dp))
 
                     Text(
@@ -175,16 +195,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    DoubleInputField(
-                        hint = "Update frequency [hours]",
-                        value = uiState.settingsState.updateFrequency.toString(),
-                        enabled = uiState.settingsState.wateringMode == WateringMode.AUTOMATIC
-                    ) {
-                        performAction(
-                            action = UiAction.SetUpdateFrequencyHours(it),
-                            successMessage = "Set update frequency to $it hours"
-                        )
-                    }
                     IntInputField(
                         hint = "Watering volume [ml]",
                         value = uiState.settingsState.wateringVolumeMl.toString(),
@@ -213,22 +223,12 @@ class MainActivity : ComponentActivity() {
                     )
                     DoubleInputField(
                         hint = "Watering frequency [hours]",
-                        value = uiState.settingsState.updateFrequency.toString(),
+                        value = uiState.settingsState.fixedWateringFrequencyHours.toString(),
                         enabled = uiState.settingsState.wateringMode == WateringMode.FIXED_FREQUENCY
                     ) {
                         performAction(
-                            action = UiAction.SetUpdateFrequencyHours(it),
-                            successMessage = "Set watering frequency to $it hours"
-                        )
-                    }
-                    IntInputField(
-                        hint = "Watering volume [ml]",
-                        value = uiState.settingsState.wateringVolumeMl.toString(),
-                        enabled = uiState.settingsState.wateringMode == WateringMode.FIXED_FREQUENCY
-                    ) {
-                        performAction(
-                            action = UiAction.SetWateringVolumeMl(it),
-                            successMessage = "Set watering volume to $it ml"
+                            action = UiAction.SetFixedWateringFrequencyHours(it),
+                            successMessage = "Set fixed watering frequency to $it hours"
                         )
                     }
                 }
@@ -341,7 +341,7 @@ class MainActivity : ComponentActivity() {
     fun ExpandableCard(
         title: String, content: @Composable ColumnScope.() -> Unit = { }
     ) {
-        var expandedState by remember { mutableStateOf(false) }
+        var expandedState by remember { mutableStateOf(true) }
         val expandedIconRotation: Float by animateFloatAsState(if (expandedState) 180f else 0f)
         Card(modifier = Modifier.fillMaxWidth(), onClick = { expandedState = !expandedState }) {
             Box(Modifier.padding(16.dp)) {

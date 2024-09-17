@@ -12,6 +12,7 @@ data class WaterinoSettings(
     val lastDataReset: Long = 0L,
     val wateringThreshold: Int = 0,
     val updateFrequency: Double = 0.0,
+    val fixedWateringFrequencyHours: Double = 0.0,
     val wateringVolumeMl: Int = 0,
     val maxWateringTemperature: Int = 0,
     val sensorReferenceValue: Int = 0,

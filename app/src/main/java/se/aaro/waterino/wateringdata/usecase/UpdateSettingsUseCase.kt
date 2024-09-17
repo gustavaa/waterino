@@ -9,13 +9,13 @@ class UpdateSettingsUseCase @Inject constructor(
     private val wateringDataRepository: WateringDataRepository
 ) {
 
-    fun WaterinoSettings.toSettingsDto() =
+    private fun WaterinoSettings.toSettingsDto() =
         SettingsDto(
             enableWatering = waterinoEnabled,
             forceNextWatering = forceNextWatering,
             lastReset = lastDataReset,
             maxWateringTemperature = maxWateringTemperature,
-            sensorReferenceValue = sensorReferenceValue,
+            fixedWateringFrequencyHours = fixedWateringFrequencyHours,
             updateFrequencyHours = updateFrequency,
             wateringThreshold = wateringThreshold,
             wateringTimeMillis = wateringVolumeMl * 10,

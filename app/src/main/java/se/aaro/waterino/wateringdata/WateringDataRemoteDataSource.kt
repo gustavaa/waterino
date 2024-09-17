@@ -1,10 +1,11 @@
 package se.aaro.waterino.wateringdata
 
+import android.util.Log
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.ktx.getValue
+import com.google.firebase.database.getValue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,7 @@ class WateringDataRemoteDataSource(firebaseDatabase: FirebaseDatabase) {
     init {
         settingsRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
+                Log.d("ASDASD", snapshot.value.toString())
                 _wateringSettings.value =
                     Result.success(snapshot.getValue<SettingsDto>() as SettingsDto)
                 dispatchFilteredWateringData()

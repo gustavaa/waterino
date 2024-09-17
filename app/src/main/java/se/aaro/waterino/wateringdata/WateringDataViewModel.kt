@@ -3,7 +3,6 @@ package se.aaro.waterino.wateringdata
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +24,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class WateringDataViewModel @Inject constructor(
     private val getSettingsUseCase: GetSettingsUseCase,
@@ -54,6 +52,8 @@ class WateringDataViewModel @Inject constructor(
         data class SetWateringVolumeMl(val wateringVolumeMl: Int) : UiAction()
         data class SetMaximumWateringTemperature(val maximumWateringTemperature: Int) : UiAction()
         data class SetWateringMode(val wateringMode: WateringMode) : UiAction()
+        data class SetFixedWateringFrequencyHours(val fixedWateringFrequencyHours: Double) :
+            UiAction()
         object ResetData : UiAction()
     }
 
@@ -128,6 +128,11 @@ class WateringDataViewModel @Inject constructor(
             is UiAction.SetWateringMode -> updateSettingsUseCase(
                 uiState.value.settingsState.copy(
                     wateringMode = uiAction.wateringMode
+                )
+            )
+            is UiAction.SetFixedWateringFrequencyHours -> updateSettingsUseCase(
+                uiState.value.settingsState.copy(
+                    fixedWateringFrequencyHours = uiAction.fixedWateringFrequencyHours
                 )
             )
         }
